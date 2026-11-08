@@ -1,0 +1,14 @@
+# Minimal local config; the Supabase CLI fills every other setting with its
+# defaults. Regenerate with `supabase init` if a full file is ever needed.
+project_id = "namazi"
+
+[db]
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:*"]
