@@ -9,6 +9,22 @@
 ## Auth
 - Sign-in with Google or email OTP. Required for suggesting, voting, claiming and adding.
 - `profiles.role`: `user` | `super_admin`. Admin rights are per masjid, stored in `masjid_admins`.
+- A `handle_new_user()` trigger on `auth.users` creates the `profiles` row (role `user`). The client never inserts into `profiles`.
+- The first super admin is promoted once by hand in the SQL editor (`update public.profiles set role = 'super_admin' where id = '<uuid>' returning id, role;`). Every later role change goes through the app.
+- Banned users can still sign in and browse; RLS blocks their inserts and votes.
+
+## Permissions
+RLS enforces every row of this. The UI only hides buttons.
+
+| Capability | Anon | User | Banned | Masjid admin (own masjid) | Super admin |
+|---|:--:|:--:|:--:|:--:|:--:|
+| Browse masjids, times, map, `/m/:slug` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Suggest a time, vote, add a masjid | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Submit a claim | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Set verified times, accept/reject suggestions | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Read claim proof photos | ❌ | own only | own only | own only | ✅ |
+| Approve/reject claims and new masjids, revoke admins | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Hide suggestions, ban users, read moderation log | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ## MVP features
 1. **Nearby masjids (list + map)**
@@ -37,6 +53,10 @@
    - A logged-in user can drop a pin and enter a name (optionally in Arabic or Urdu script). It stays hidden until a super admin approves it.
 10. **Website (Flutter web)**
     - `/` is a landing page with an area search and "use my location". `/m/:slug` is a shareable masjid detail page.
+    - Path URLs (no `#`). A reload or a shared link on any route opens that route, not a 404.
+11. **Settings**
+    - Theme: system (default), light or dark, remembered on the device.
+    - Sign out, and an app version line (`version+build`, plus the Shorebird patch number on Android) so a bug report says exactly what build it came from.
 
 ## Trust rules
 - **Display priority per namaz** (computed in the `masjid_times` RPC):
@@ -53,6 +73,7 @@
   - Manual review by the super admin, who calls the masjid or checks the proof photo.
   - At most 3 approved admins per masjid. Admin rights can be revoked.
   - Every verified time change is logged in `jamat_time_history`.
+- **Moderation log:** every super-admin action (approve/reject claim or masjid, revoke admin, hide suggestion, ban/unban) is written to `moderation_log` by a trigger, with who, when, the before/after status and the reason. Super admin only, read-only, newest first.
 
 ## Core tables (key columns)
 - `profiles`: id (→auth.users), display_name, role, is_banned, created_at
@@ -62,23 +83,52 @@
 - `jamat_time_history`: jamat_times columns plus changed_at and changed_by (written by a trigger)
 - `time_suggestions`: id, masjid_id, prayer, azaan_time, jamat_time, note, suggested_by, status (`open`|`accepted`|`rejected`|`superseded`|`hidden`), net_votes, created_at
 - `suggestion_votes`: suggestion_id, user_id, value (−1|1). PK (suggestion_id, user_id).
+- `moderation_log`: id, actor_id, action, target_table, target_id, before jsonb, after jsonb, reason, created_at (written by triggers only; no client insert policy)
+- Storage: `claim-proofs` bucket, private. Path `<user_id>/<claim_id>.jpg`; owner and super admin can read, owner can upload.
 - RPCs: `nearby_masjids(lat, lng, radius_m)`, `masjid_times(masjid_id)`, `next_jamat_nearby(lat, lng, radius_m)`
+
+## Supabase project setup (once, per environment)
+- Authentication → URL Configuration: **Site URL** = the Vercel domain. **Redirect URLs** add the Vercel domain, `http://localhost:*` for dev, and the app's deep-link scheme for mobile Google sign-in. Left on `localhost:3000`, OTP and OAuth links only work on the dev machine.
+- Email OTP needs **custom SMTP** before launch. The built-in mailer only delivers to project members and is capped at a few emails an hour.
+- Google provider: web client ID + secret in Supabase; Android and iOS client IDs for native sign-in.
+- Extensions: `postgis` enabled by the first migration, not by hand.
+- After every prod migration: `./tools/verify_remote.sh`.
 
 ## Build order
 - **Phase 1 — Browse (read-only)**
-  - Monorepo, theme tokens, router, l10n setup
-  - Migrations: profiles, masjids, jamat_times, RLS, PostGIS, the nearby RPC
+  - Monorepo, theme tokens (with contrast test), bundled fonts, router, l10n setup
+  - `Env` + `env.json`, `bootstrap.dart` with the misconfigured screen, shared error/empty/loading views, `guardPg` error mapping
+  - `tools/check.sh` and a Jenkins job that runs it on any branch (test-only, no deploy yet)
+  - Migrations: profiles (+ `handle_new_user` trigger), masjids, jamat_times, RLS, PostGIS, the nearby RPC, with pgTAP tests
   - OSM import for Mumbai, plus seed jamat times for 5 test masjids
   - Nearby list and map, masjid detail, next-jamat highlight, location-denied fallback
+  - Widget smoke tests at the four sizes, light and dark
 - **Phase 2 — Community**
-  - Auth (Google + email OTP)
-  - time_suggestions and suggestion_votes, `masjid_times` RPC with the trust rules, abuse trigger
+  - Auth (Google + email OTP), custom SMTP, redirect URLs
+  - time_suggestions and suggestion_votes, `masjid_times` RPC with the trust rules, abuse trigger, pgTAP for every trust rule
   - Suggest times, voting, add missing masjid
-- **Phase 3 — Admins + web**
-  - Claim flow and proof upload (private bucket)
+  - Settings screen (theme, sign out, version)
+- **Phase 3 — Admins + web + release**
+  - Claim flow and proof upload (private bucket, storage policies tested)
   - Admin time management and admin inbox; super admin review queues
-  - History trigger, staleness rule
-  - Web landing page at `/`, `/m/:slug` pages, release builds
+  - History trigger, staleness rule, moderation log
+  - Web landing page at `/`, `/m/:slug` pages
+  - Vercel: `vercel.json`, `tools/vercel_build.sh`, Site URL switched to the Vercel domain
+  - Shorebird: `shorebird init`, first `release` APK/AAB; later Dart-only fixes ship as `patch`
+  - Android release signing (upload key in Jenkins credentials, never the debug key)
+  - Jenkins deploy job: `BRANCH` + `TARGET` (`all` | `web` | `patch` | `release` | `db`), APKs archived on the build page and in `dist/`
+  - `tools/verify_remote.sh` against prod; three-account RLS check (user, masjid admin, super admin) repeated on prod
+
+## Definition of done (every feature)
+- `./tools/check.sh` green: format, analyze 0 issues, Dart tests, pgTAP tests.
+- Loading, empty and error states handled and visible in the widget smoke test.
+- Strings in ARB, no hardcoded colors/sizes.
+- `NOTES.md` updated with any deviation from this PRD and anything still open.
+
+## v1.1 candidates (not in v1)
+- **Printable timetable:** a masjid admin downloads an A4 PDF of the masjid's current times with a QR code to `/m/:slug`, to pin on the notice board. Browser download on web, share sheet on mobile (conditional-import helper, no `file_saver`).
+- **iOS release lane in Jenkins** (Shorebird iOS release + TestFlight upload).
+- **Admin invites by email** via an Edge Function (needs the service role key, so never from the client).
 
 ## Out of scope for v1
 - Push notifications and jamat reminders
