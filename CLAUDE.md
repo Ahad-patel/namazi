@@ -43,23 +43,27 @@ tools/
 Jenkinsfile              # one-click deploy, calls tools/build_all.sh
 vercel.json              # SPA rewrites + cache headers
 shorebird.yaml           # Shorebird app_id (not secret, committed)
-env.example.json         # template; real env.json is git-ignored
+env.example.json         # template; real env.<local|staging|prod>.json are git-ignored
+web/privacy.html, web/terms.html, web/delete-account.html   # static legal pages
 NOTES.md                 # decisions that differ from PRD, open questions, verified, still to do
+CHECKLISTS.md            # data-loss, performance and launch/legal checklists, ticked as done
 ```
 - Dependency direction: apps → data → core, and apps → ui → core. Packages never import from apps.
 - Admin and super-admin screens live in `apps/masjid_timer/lib/features/admin/`, gated by `profiles.role`.
 
 ## Commands
 - `dart pub get` at the repo root (resolves the whole workspace)
-- `flutter run -d chrome --dart-define-from-file=env.json` or `flutter run --dart-define-from-file=env.json`, from `apps/masjid_timer`
+- `flutter run -d chrome --dart-define-from-file=env.local.json` or `flutter run --dart-define-from-file=env.local.json`, from `apps/masjid_timer`
 - `dart run build_runner build -d`, in the package you changed
 - `supabase start` / `supabase db reset` / `supabase migration new <name>` / `supabase test db`
 - `./tools/check.sh` — everything CI runs; must pass before a task is done. The SQL tests need Docker running (`supabase start`).
 - `./tools/build_all.sh [web|patch|release|all]` — release builds (see Build & deploy)
 
 ## Config and secrets
-- Build-time config only, via `--dart-define-from-file=env.json`. Keys: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `MAPTILER_KEY`.
-- `env.json` is git-ignored; `env.example.json` is the committed template. Add a key to both.
+- Build-time config only, via `--dart-define-from-file=env.<env>.json`. Keys: `APP_ENV` (`local` | `staging` | `prod`), `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `MAPTILER_KEY`, `SENTRY_DSN` (empty = off), `TERMS_VERSION`.
+- Three Supabase projects: local, staging, prod. One env file per environment; never point a dev build at prod.
+- `env.*.json` are git-ignored; `env.example.json` is the committed template. Add a key to all of them.
+- Non-prod builds show a persistent environment strip in the app bar, so prod is unmistakable.
 - Read config through `Env` in `packages/data` (`String.fromEnvironment`). If `Env.isConfigured` is false, `bootstrap.dart` shows a misconfigured screen explaining what's missing, never a blank page.
 - The anon key and MapTiler key ship in the build and are public by design. RLS is the guard. Restrict the MapTiler key to the app's domains in the MapTiler dashboard.
 - Service role key, Shorebird token, Vercel token, DB password: Jenkins credentials only. Never in Flutter code, dart-defines or git.
@@ -72,7 +76,17 @@ NOTES.md                 # decisions that differ from PRD, open questions, verif
 - What the UI displays per namaz comes from the `masjid_times(masjid_id)` RPC. Never reimplement the trust rules on the client.
 - The client uses only the anon key. The service role key never goes in Flutter code.
 - Store times as local `time` plus `masjids.timezone`. Never store UTC timestamps for jamat.
-- Postgres gotchas (all hit in earlier projects):
+- Data-loss rules:
+  - No client `delete` policy on any table except `suggestion_votes` (own vote). Removal = `status` change (`hidden` / `revoked` / `superseded`) through a role-checked RPC, restorable by the super admin.
+  - Moderation RPCs act on one id at a time. Any future bulk action caps at 50 rows server-side.
+  - Storage objects are write-once: insert policy only, new path per upload, no client update/delete.
+  - A migration that drops or truncates anything starts with `-- destructive: <reason>`; `tools/check.sh` fails on a drop without it.
+  - Every migration goes local (`db reset` + `test db`) → staging → prod. Never straight to prod.
+- Privacy rules:
+  - User lat/lng is a query parameter only. Never insert it, log it, or `raise notice` it.
+  - Phone numbers and proof photos exist only on claims and are purged 90 days after the decision.
+  - Account deletion runs in the `delete-account` Edge Function (service role, server side). Suggestions are anonymised (`suggested_by = null`), not deleted.
+- Query rules: always list columns in `.select('a,b,c')`, never `*`. Index every column a policy, RPC filter or sort uses, in the same migration. Lists are paginated (`.range()`, 25) or capped (nearby: 50).- Postgres gotchas (all hit in earlier projects):
   - Views are `with (security_invoker = true)`. Without it a view runs as its owner and reads straight past RLS.
   - `security definer` functions set `search_path = ''` and schema-qualify every name.
   - Don't name a helper `current_role()` (reserved). Use `app_role()`.
@@ -87,6 +101,7 @@ NOTES.md                 # decisions that differ from PRD, open questions, verif
   - `StorageException` 403 → `PermissionException`
   - socket / host lookup / `ClientException` / `TimeoutException` → `NetworkException`
   - JWT expired → `SessionExpiredException`
+  - every call gets `.timeout(const Duration(seconds: 10))`
   - anything else → `ServerException`, logged with `debugPrint` + stack
 - Each `AppException` has a plain-language message (from ARB) plus the raw technical detail. The shared error view shows the message and hides the detail behind "Technical details".
 - No `try` outside the data layer. Widgets get errors only through `AsyncValue.error`.
@@ -103,6 +118,8 @@ NOTES.md                 # decisions that differ from PRD, open questions, verif
 - Fonts are bundled in `assets/fonts/`. Don't use `google_fonts` (fetches at runtime, breaks offline first launch and widget tests).
 - Web-only and IO-only code goes behind conditional imports (`if (dart.library.js_interop)` / `if (dart.library.io)`). Never import `dart:io` from code the web build compiles.
 - Use `EdgeInsetsDirectional` / `AlignmentDirectional` everywhere (RTL masjid names, future Urdu UI).
+- Accessibility: every icon-only button has a `tooltip`; badges, map pins and the countdown have a `Semantics` label; decorative icons are excluded from semantics.
+- Performance: lists use `.builder` constructors; a ticking widget (countdown) rebuilds only itself; watch single fields with `ref.watch(p.select(...))`; admin features are `deferred as` imports on web.
 - A deliberate shortcut with a known ceiling gets a `ponytail:` comment naming the ceiling and the upgrade path.
 
 ## Tests
@@ -112,7 +129,7 @@ NOTES.md                 # decisions that differ from PRD, open questions, verif
 - Widget smoke tests for each main screen at 360×800, 390×844, 900×1024 and 1440×900, in light and dark, and at 2.0 text scale: render, `expect(tester.takeException(), isNull)`.
 
 ## Build & deploy
-- `tools/build_all.sh <target>` (run from repo root, needs `env.json`):
+- `tools/build_all.sh <target>` (run from repo root, needs `env.json`, copied from the chosen `env.<env>.json`):
   - `web` — `flutter build web --release`, copy `vercel.json` into `build/web` with the build step switched off, `vercel deploy --prod`.
   - `patch` — `shorebird patch android` against the current `pubspec.yaml` version. Dart-only changes.
   - `release` — `shorebird release android --artifact apk` (and `appbundle` for Play), copied to `dist/masjid_timer_v<version>+<build>.apk`.
@@ -122,7 +139,9 @@ NOTES.md                 # decisions that differ from PRD, open questions, verif
   - Parameters: `BRANCH` (Git Parameter plugin, default `main`) and `TARGET` (`all` | `web` | `patch` | `release` | `db`).
   - Stages: checkout `BRANCH` → `./tools/check.sh` → build target → archive APK.
   - `env.json` comes from a secret-file credential and is deleted by a `trap` even on failure. `disableConcurrentBuilds()`.
-  - `db` runs `supabase db push` then `./tools/verify_remote.sh`. It is never part of `all`; schema changes to prod are a deliberate, separate click.
+  - `ENV` parameter (`staging` | `prod`) picks the secret file `masjid-env-<env>`. Default `staging`.
+  - `db` runs `supabase db push` then `./tools/verify_remote.sh`. It is never part of `all`. With `ENV=prod` it stops at an input step that needs "PROD" typed.
+- Jenkins `backup-prod` job (nightly): schema + data dump and `rclone sync` of the `claim-proofs` bucket to an off-Supabase bucket with object lock (30 days), write-only key. Emails on failure, and on > 20 moderation actions in 24h. Restore test monthly (CHECKLISTS.md §1).
 - Vercel: `vercel.json` rewrites everything to `/index.html` (go_router owns routes). `assets/`, `canvaskit/`, `icons/` are `immutable` for a year; `index.html`, `flutter_service_worker.js`, `version.json`, `manifest.json` are `must-revalidate` so a deploy is never pinned to a stale build.
 - `tools/vercel_build.sh` (Vercel git builds) clones a pinned Flutter tag (same version as local) and fails loudly if `SUPABASE_URL`, `SUPABASE_ANON_KEY` or `MAPTILER_KEY` is unset.
 - iOS: release builds by hand (Xcode / TestFlight) for v1. No iOS lane in Jenkins yet.
@@ -134,3 +153,4 @@ NOTES.md                 # decisions that differ from PRD, open questions, verif
 - Read `PRD.md` before starting a feature. Build in its phase order.
 - Read `DESIGN.md` before any UI work.
 - Read `NOTES.md` for open decisions and known gaps.
+- Check `CHECKLISTS.md` for items tied to the feature's phase; tick them when done and verified.

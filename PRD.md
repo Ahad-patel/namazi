@@ -12,6 +12,7 @@
 - A `handle_new_user()` trigger on `auth.users` creates the `profiles` row (role `user`). The client never inserts into `profiles`.
 - The first super admin is promoted once by hand in the SQL editor (`update public.profiles set role = 'super_admin' where id = '<uuid>' returning id, role;`). Every later role change goes through the app.
 - Banned users can still sign in and browse; RLS blocks their inserts and votes.
+- First sign-in, before contributing: "I am 18 or older" (required, DPDP) and "I agree to the Terms and Privacy Policy" (unticked, linked). Stored as `profiles.terms_version` + `terms_accepted_at`; asked again when `TERMS_VERSION` changes. Browsing never needs this.
 
 ## Permissions
 RLS enforces every row of this. The UI only hides buttons.
@@ -57,6 +58,14 @@ RLS enforces every row of this. The UI only hides buttons.
 11. **Settings**
     - Theme: system (default), light or dark, remembered on the device.
     - Sign out, and an app version line (`version+build`, plus the Shorebird patch number on Android) so a bug report says exactly what build it came from.
+    - **Download my data** (JSON of profile, suggestions, votes, claims via `my_data()` RPC).
+    - **Delete my account** (typed confirmation → `delete-account` Edge Function). Suggestions stay, anonymised.
+    - About: contact email, Privacy, Terms, Open-source licences.
+12. **Legal pages (static, web)**
+    - `/privacy.html`, `/terms.html`, `/delete-account.html` as plain HTML in `web/`, linked from the landing page, sign-in, Settings and store listings.
+13. **Trust copy**
+    - Tapping a source badge explains it ("Set by an approved admin of this masjid" / "Suggested by the community, N net votes").
+    - Masjid detail footer: "Times can change. Confirm with the masjid." Map and `/m/:slug` show "© OpenStreetMap contributors · © MapTiler".
 
 ## Trust rules
 - **Display priority per namaz** (computed in the `masjid_times` RPC):
@@ -73,10 +82,11 @@ RLS enforces every row of this. The UI only hides buttons.
   - Manual review by the super admin, who calls the masjid or checks the proof photo.
   - At most 3 approved admins per masjid. Admin rights can be revoked.
   - Every verified time change is logged in `jamat_time_history`.
+- **Soft delete only:** masjids, suggestions and admin rights are hidden/revoked, never hard-deleted from the client. The super admin has a Hidden tab with Restore. Hide masjid, ban user and revoke admin need the name typed to confirm.
 - **Moderation log:** every super-admin action (approve/reject claim or masjid, revoke admin, hide suggestion, ban/unban) is written to `moderation_log` by a trigger, with who, when, the before/after status and the reason. Super admin only, read-only, newest first.
 
 ## Core tables (key columns)
-- `profiles`: id (→auth.users), display_name, role, is_banned, created_at
+- `profiles`: id (→auth.users), display_name, role, is_banned, is_adult, terms_version, terms_accepted_at, created_at
 - `masjids`: id, slug, name, name_local, name_script (`arab`|`urdu`|null), address, location geography(Point), timezone, facilities text[], status (`pending`|`active`|`hidden`), osm_id, created_by
 - `masjid_admins`: masjid_id, user_id, status (`pending`|`approved`|`rejected`|`revoked`), role_at_masjid, phone, proof_path, reviewed_by, reviewed_at, reason
 - `jamat_times` (verified, current): masjid_id, prayer (enum fajr|zuhr|asr|maghrib|isha|jummah), azaan_time, jamat_time, valid_from, updated_by, updated_at. Unique on (masjid_id, prayer, valid_from).
@@ -84,10 +94,15 @@ RLS enforces every row of this. The UI only hides buttons.
 - `time_suggestions`: id, masjid_id, prayer, azaan_time, jamat_time, note, suggested_by, status (`open`|`accepted`|`rejected`|`superseded`|`hidden`), net_votes, created_at
 - `suggestion_votes`: suggestion_id, user_id, value (−1|1). PK (suggestion_id, user_id).
 - `moderation_log`: id, actor_id, action, target_table, target_id, before jsonb, after jsonb, reason, created_at (written by triggers only; no client insert policy)
-- Storage: `claim-proofs` bucket, private. Path `<user_id>/<claim_id>.jpg`; owner and super admin can read, owner can upload.
+- Storage: `claim-proofs` bucket, private. Path `<user_id>/<claim_id>.jpg`; owner and super admin can read, owner can upload once (no update/delete). Resized on device to 1600px, JPEG 80.
+- Retention: claim phone + proof photo deleted 90 days after the decision (`purge-claims` scheduled Edge Function); superseded suggestions deleted after 1 year.
+- Edge Functions: `delete-account`, `purge-claims`. Both region `ap-south-1`, same as the database.
 - RPCs: `nearby_masjids(lat, lng, radius_m)`, `masjid_times(masjid_id)`, `next_jamat_nearby(lat, lng, radius_m)`
 
 ## Supabase project setup (once, per environment)
+- Three projects: local, staging, prod, all in `ap-south-1` (Mumbai). Prod on the Pro plan (daily backups); PITR add-on once real community data builds up.
+- MFA on every Supabase, Vercel, GitHub and Jenkins account. Only the owner has Owner role on the prod org.
+- Sign the DPAs for Supabase, Vercel, MapTiler and Sentry.
 - Authentication → URL Configuration: **Site URL** = the Vercel domain. **Redirect URLs** add the Vercel domain, `http://localhost:*` for dev, and the app's deep-link scheme for mobile Google sign-in. Left on `localhost:3000`, OTP and OAuth links only work on the dev machine.
 - Email OTP needs **custom SMTP** before launch. The built-in mailer only delivers to project members and is capped at a few emails an hour.
 - Google provider: web client ID + secret in Supabase; Android and iOS client IDs for native sign-in.
@@ -97,7 +112,7 @@ RLS enforces every row of this. The UI only hides buttons.
 ## Build order
 - **Phase 1 — Browse (read-only)**
   - Monorepo, theme tokens (with contrast test), bundled fonts, router, l10n setup
-  - `Env` + `env.json`, `bootstrap.dart` with the misconfigured screen, shared error/empty/loading views, `guardPg` error mapping
+  - `Env` + `env.<env>.json` files (local, staging, prod), `bootstrap.dart` with the misconfigured screen, shared error/empty/loading views, `guardPg` error mapping
   - `tools/check.sh` and a Jenkins job that runs it on any branch (test-only, no deploy yet)
   - Migrations: profiles (+ `handle_new_user` trigger), masjids, jamat_times, RLS, PostGIS, the nearby RPC, with pgTAP tests
   - OSM import for Mumbai, plus seed jamat times for 5 test masjids
@@ -118,9 +133,17 @@ RLS enforces every row of this. The UI only hides buttons.
   - Android release signing (upload key in Jenkins credentials, never the debug key)
   - Jenkins deploy job: `BRANCH` + `TARGET` (`all` | `web` | `patch` | `release` | `db`), APKs archived on the build page and in `dist/`
   - `tools/verify_remote.sh` against prod; three-account RLS check (user, masjid admin, super admin) repeated on prod
+  - Settings: download my data, delete my account; `delete-account` and `purge-claims` Edge Functions
+  - Legal pages, Play Data safety + Apple App Privacy forms from the SDK list in CHECKLISTS.md
+  - Sentry (prod only, PII off); admin features as deferred imports on web
+- **Before launch** (CHECKLISTS.md)
+  - `backup-prod` Jenkins job + off-site locked bucket; first restore test passed and recorded
+  - Slow-phone and Slow-4G test passed; every unticked CHECKLISTS.md item is either done or has a reason in `NOTES.md`
 
 ## Definition of done (every feature)
 - `./tools/check.sh` green: format, analyze 0 issues, Dart tests, pgTAP tests.
+- Shipped to staging and checked there before prod.
+- Related CHECKLISTS.md items ticked.
 - Loading, empty and error states handled and visible in the widget smoke test.
 - Strings in ARB, no hardcoded colors/sizes.
 - `NOTES.md` updated with any deviation from this PRD and anything still open.

@@ -181,6 +181,7 @@ components:
 - Mobile first (390px wide). Web content is max 1180px, and lists become a two-column list + map at ≥ 900px.
 - Touch targets ≥ 48px.
 - Responsive sizes every main screen is smoke-tested at: 360×800 (small Android), 390×844 (design width), 900×1024 (two-column breakpoint), 1440×900 (desktop web). No overflow, no exception, at 1.0 and 2.0 text scale.
+- Web keyboard: Tab order follows visual order, Enter/Space activates cards and rows, Esc closes dialogs and sheets, and focus shows a 2px `primary` outline (never removed). The map has visible zoom buttons for keyboard and switch users.
 - Header actions adapt: labelled buttons at ≥ 900px, icon buttons with a tooltip below that. A screen's actions never carry over to the next screen.
 
 ## Elevation & Depth
@@ -217,6 +218,17 @@ components:
   - Error: a plain-language message for a non-technical reader ("Couldn't reach the server. Check your connection and try again.") + Retry. The raw error sits behind a collapsed "Technical details" line, so a screenshot of a bug report still carries it.
   - Permission denied (RLS said no): "You don't have permission to do that", never the Postgres text.
   - Session expired: "Please sign in again" with a Sign in button.
+- **Environment strip**
+  - Non-prod builds only: a 24px strip above the app bar, `error` fill, "STAGING" / "LOCAL" in `label`. Never in prod.
+- **Destructive confirm** (`ConfirmDestructiveDialog` in `packages/ui`)
+  - Title says what happens ("Hide Masjid-e-Noor?"), body says the effect and whether it can be undone ("It disappears for everyone. You can restore it from Hidden.").
+  - A text field asks for the exact name (or "DELETE" for account deletion). The `error`-colored button stays disabled until it matches. Cancel is the default focus.
+- **Consent at first sign-in**
+  - Two unticked checkboxes ("I am 18 or older", "I agree to the Terms and Privacy Policy" with both as links) and a Continue button disabled until both are ticked. No pre-ticked boxes anywhere in the app.
+- **Attribution and trust copy**
+  - Map: flutter_map `RichAttributionWidget` with OpenStreetMap and MapTiler, bottom end corner, always visible.
+  - Masjid detail footer: `caption` in `on-surface-variant`, "Times can change. Confirm with the masjid."
+  - Source badges are tappable and open a short bottom sheet explaining the source.
 - **Offline banner**
   - A thin `offline-banner` strip under the app bar while there's no connection; cached content stays visible below it. Disappears on reconnect. No modal.
 - **Settings**
@@ -228,6 +240,9 @@ components:
 - Do always show where a time came from (its source) and when it was updated.
 - Do test every screen in dark mode, at 200% text scale, and with an Urdu masjid name. The widget smoke tests cover this; add each new screen to them.
 - Do write error and empty-state copy for someone on the way to the masjid, not for a developer.
+- Do give every icon-only control a tooltip and every badge, pin and countdown a semantics label ("Next jamat Asr in 18 minutes").
+- Do make Delete account as easy to find as Sign out.
+- Don't call times "accurate" or "official" anywhere, including store listings and the landing page.
 - Don't use gold for anything except the next jamat.
 - Don't show a community time styled as if it were verified.
 - Don't use emoji, gradients or decorative mosque clip-art. Icons are outlined, 20–24px.
