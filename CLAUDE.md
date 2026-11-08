@@ -7,28 +7,51 @@ Find the nearest masjids from your location and see each one's namaz jamat times
 - Supabase: Auth, Postgres, PostGIS for nearby search, Storage for claim proof photos.
 - RLS is enabled on every table. No table is ever created without policies.
 - Routing: go_router with `usePathUrlStrategy()` (no `#` in web URLs, so `/m/:slug` links work).
-- Models: freezed + json_serializable.
+- Models: Equatable entities + hand-written `fromJson`/`toJson` on data models. No freezed, no json_serializable, no build_runner (same as qqc_management / marc_management).
 - Maps: flutter_map with MapTiler tiles. Never use tile.openstreetmap.org in production.
 - Location: geolocator. If permission is denied, fall back to searching by area.
 - Hosting: web on Vercel, Android OTA patches via Shorebird, one-click deploys via Jenkins on the dev Mac.
 
-## State management
-- Riverpod (riverpod_generator): compile-safe dependency injection plus async state, works across packages, and can be tested without a BuildContext.
+## Architecture: BLoC + clean architecture
+Same structure as the owner's `qqc_management` and `marc_management` repos. When unsure how something is done, copy the pattern from there.
+- State: `flutter_bloc` (`bloc`, `equatable`). Events and states are Dart 3 `sealed` classes / Equatable classes with `copyWith`, in `part` files next to the bloc. Cubit only for trivial state (theme).
+- DI: `get_it`, one `lib/core/di/injector.dart` (`final sl = GetIt.instance; configureDependencies()`). Supabase client, data sources and repositories are lazy singletons; use cases and blocs are factories. `AuthBloc` is a lazy singleton because the router listens to it.
+- Errors across layers: `dartz` `Either<Failure, T>`. Data sources throw; repositories catch and return `Left(Failure)`; blocs `fold`.
+- Layers per feature, dependency points inward: `presentation → domain ← data`. `domain/` is pure Dart (no Flutter, no Supabase imports).
 
-## Monorepo (Dart pub workspaces)
+## Project structure
+Single Flutter package at the repo root. The `flutter create` output stays as generated: package name `namazi`, Android `com.ska.namazi`, iOS/macOS/web/windows/linux folders. Touch generated files only to add code, permissions or config (e.g. location permission in `AndroidManifest.xml` / `Info.plist`). Never rename the package or move the app into a subfolder.
 ```
-apps/
-  masjid_timer/          # user app + role-gated admin; mobile + web
-    lib/bootstrap.dart   # runZonedGuarded, Supabase.initialize, misconfigured screen
-    lib/features/<feature>/{data,presentation}/
-    lib/router/
-    lib/l10n/            # ARB files, flutter gen-l10n
-    assets/fonts/        # bundled fonts (no google_fonts runtime fetch)
-  # admin app goes here if it's ever split out; it must only depend on packages/
-packages/
-  core/                  # models (freezed), enums, AppException types, pure Dart, no Flutter
-  data/                  # Supabase client, repositories, Riverpod providers, Env
-  ui/                    # theme tokens (ThemeExtension), shared widgets
+lib/
+  main.dart              # void main() => bootstrap(NamaziApp.new);
+  bootstrap.dart         # runZonedGuarded, BlocObserver, Supabase.initialize, configureDependencies, misconfigured screen
+  core/
+    config/              # env.dart (Env), app_constants.dart
+    di/injector.dart     # get_it registrations
+    error/               # exceptions.dart, failures.dart, postgrest_guard.dart (pg), repository_guard.dart (guard)
+    network/             # network_info.dart
+    platform/            # conditional-import helpers (*_io.dart / *_web.dart / *_stub.dart)
+    router/app_router.dart
+    theme/               # app_colors, app_spacing, app_typography, app_theme, AppTokens ThemeExtension, theme_cubit
+    usecase/usecase.dart # UseCase<R, Params>, NoParams
+    utils/
+    widgets/             # shared widgets: ErrorView, EmptyState, LoadingView, ConfirmDestructiveDialog, ...
+  features/<feature>/
+    data/
+      datasources/       # <feature>_remote_ds.dart: Supabase calls, throws exceptions
+      models/            # <x>_model.dart extends entity, fromJson/toJson
+      repositories/      # <feature>_repository_impl.dart, mixes in RepositoryGuard
+    domain/
+      entities/          # Equatable, pure Dart
+      repositories/      # abstract <feature>_repository.dart
+      usecases/          # one class per use case (or <feature>_usecases.dart when several are one-liners)
+    presentation/
+      bloc/              # <feature>_bloc.dart + part <feature>_event.dart + part <feature>_state.dart
+      pages/
+      widgets/
+  l10n/                  # ARB files, flutter gen-l10n
+assets/fonts/            # bundled fonts (no google_fonts runtime fetch)
+test/                    # mirrors lib/: test/core/..., test/features/<feature>/...
 supabase/
   migrations/            # the only way the schema changes
   tests/                 # pgTAP: RLS, trust rules, triggers (`supabase test db`)
@@ -36,7 +59,7 @@ supabase/
   functions/             # edge functions, if needed
 tools/
   osm_import/            # one-off script that imports masjids from OSM
-  check.sh               # format + analyze + every package's tests + SQL tests
+  check.sh               # format + analyze + flutter test + SQL tests
   build_all.sh           # web | patch | release | all — used by Jenkins
   vercel_build.sh        # Vercel git builds: fetches pinned Flutter SDK
   verify_remote.sh       # probes prod with the anon key: every table/RPC exists
@@ -48,13 +71,13 @@ web/privacy.html, web/terms.html, web/delete-account.html   # static legal pages
 NOTES.md                 # decisions that differ from PRD, open questions, verified, still to do
 CHECKLISTS.md            # data-loss, performance and launch/legal checklists, ticked as done
 ```
-- Dependency direction: apps → data → core, and apps → ui → core. Packages never import from apps.
-- Admin and super-admin screens live in `apps/masjid_timer/lib/features/admin/`, gated by `profiles.role`.
+- Features never import another feature's `data/`. Shared needs go through `core/` or the other feature's `domain/`.
+- Admin and super-admin screens live in `lib/features/admin/`, gated by `profiles.role` (read from `AuthBloc` state).
 
 ## Commands
-- `dart pub get` at the repo root (resolves the whole workspace)
-- `flutter run -d chrome --dart-define-from-file=env.local.json` or `flutter run --dart-define-from-file=env.local.json`, from `apps/masjid_timer`
-- `dart run build_runner build -d`, in the package you changed
+- `flutter pub get` at the repo root
+- `flutter run -d chrome --dart-define-from-file=env.local.json` or `flutter run --dart-define-from-file=env.local.json`, from the repo root
+- `flutter gen-l10n` after editing ARB files (no other codegen)
 - `supabase start` / `supabase db reset` / `supabase migration new <name>` / `supabase test db`
 - `./tools/check.sh` — everything CI runs; must pass before a task is done. The SQL tests need Docker running (`supabase start`).
 - `./tools/build_all.sh [web|patch|release|all]` — release builds (see Build & deploy)
@@ -64,7 +87,7 @@ CHECKLISTS.md            # data-loss, performance and launch/legal checklists, t
 - Three Supabase projects: local, staging, prod. One env file per environment; never point a dev build at prod.
 - `env.*.json` are git-ignored; `env.example.json` is the committed template. Add a key to all of them.
 - Non-prod builds show a persistent environment strip in the app bar, so prod is unmistakable.
-- Read config through `Env` in `packages/data` (`String.fromEnvironment`). If `Env.isConfigured` is false, `bootstrap.dart` shows a misconfigured screen explaining what's missing, never a blank page.
+- Read config through `Env` in `lib/core/config/env.dart` (`String.fromEnvironment`). If `Env.isConfigured` is false, `bootstrap.dart` shows a misconfigured screen explaining what's missing, never a blank page.
 - The anon key and MapTiler key ship in the build and are public by design. RLS is the guard. Restrict the MapTiler key to the app's domains in the MapTiler dashboard.
 - Service role key, Shorebird token, Vercel token, DB password: Jenkins credentials only. Never in Flutter code, dart-defines or git.
 
@@ -95,44 +118,44 @@ CHECKLISTS.md            # data-loss, performance and launch/legal checklists, t
 - After applying migrations to prod, run `./tools/verify_remote.sh`. It expects 200 (or 401/403) for each object and fails on 404 (`PGRST205`, object never created).
 
 ## Errors
-- Repositories wrap every Supabase call in one shared helper (`guardPg` in `packages/data`) that maps errors to `AppException` subtypes from `packages/core`:
+- Data sources wrap every Supabase call in `pg()` (`lib/core/error/postgrest_guard.dart`), which maps errors to exceptions in `lib/core/error/exceptions.dart`:
   - `PostgrestException` code `42501` → `PermissionException` (an RLS policy said no)
   - `PGRST116` → `NotFoundException`
   - `StorageException` 403 → `PermissionException`
-  - socket / host lookup / `ClientException` / `TimeoutException` → `NetworkException`
   - JWT expired → `SessionExpiredException`
+  - anything else → `ServerException(message, code)`
   - every call gets `.timeout(const Duration(seconds: 10))`
-  - anything else → `ServerException`, logged with `debugPrint` + stack
-- Each `AppException` has a plain-language message (from ARB) plus the raw technical detail. The shared error view shows the message and hides the detail behind "Technical details".
-- No `try` outside the data layer. Widgets get errors only through `AsyncValue.error`.
+- Repositories mix in `RepositoryGuard` and return `guard(() => ...)`, which turns exceptions into `Failure` subtypes (`lib/core/error/failures.dart`): `PermissionFailure`, `NotFoundFailure`, `SessionExpiredFailure`, `NetworkFailure` (socket / host lookup / `ClientException` / `TimeoutException`), `ServerFailure` (anything else, logged with `debugPrint` + stack).
+- Each `Failure` carries the raw technical `detail`. The shared `ErrorView` maps the subtype to a plain-language ARB string and hides the detail behind "Technical details".
+- No `try` outside `data/`. Blocs `fold` the `Either`; widgets see errors only as a bloc state.
 
 ## Coding rules
 - Before finishing any task: `./tools/check.sh` passes (`dart format --set-exit-if-changed`, `flutter analyze` with 0 issues, all tests).
 - No hardcoded colors, strings or sizes:
-  - Colors and typography: `Theme.of(context)` and `context.tokens` (ThemeExtension in `packages/ui`).
-  - Spacing and radius: `AppSpacing.*` and `AppRadius.*` from `packages/ui`.
+  - Colors and typography: `Theme.of(context)` and `context.tokens` (ThemeExtension in `lib/core/theme/`).
+  - Spacing and radius: `AppSpacing.*` and `AppRadius.*` from `lib/core/theme/app_spacing.dart`.
   - User-facing strings: ARB files via `AppLocalizations`.
-- Widgets used in 2+ features move to `packages/ui`.
-- Repositories return typed models from `packages/core`. Widgets never call Supabase directly.
-- Handle loading, empty and error states with `AsyncValue.when`. No silent catches.
+- Widgets used in 2+ features move to `lib/core/widgets/`.
+- Repositories return domain entities. Widgets and blocs never call Supabase directly; blocs call use cases.
+- Every bloc state models loading, empty, loaded and error (status enum or sealed states); pages switch on it exhaustively. No silent catches.
 - Fonts are bundled in `assets/fonts/`. Don't use `google_fonts` (fetches at runtime, breaks offline first launch and widget tests).
 - Web-only and IO-only code goes behind conditional imports (`if (dart.library.js_interop)` / `if (dart.library.io)`). Never import `dart:io` from code the web build compiles.
 - Use `EdgeInsetsDirectional` / `AlignmentDirectional` everywhere (RTL masjid names, future Urdu UI).
 - Accessibility: every icon-only button has a `tooltip`; badges, map pins and the countdown have a `Semantics` label; decorative icons are excluded from semantics.
-- Performance: lists use `.builder` constructors; a ticking widget (countdown) rebuilds only itself; watch single fields with `ref.watch(p.select(...))`; admin features are `deferred as` imports on web.
+- Performance: lists use `.builder` constructors; a ticking widget (countdown) rebuilds only itself; read single fields with `context.select` / `BlocSelector` / `buildWhen`; admin features are `deferred as` imports on web.
 - A deliberate shortcut with a known ceiling gets a `ponytail:` comment naming the ceiling and the upgrade path.
 
 ## Tests
-- Unit tests for repositories (mock Supabase client) and every trust-rule edge case.
+- Unit tests (`mocktail`) for repositories (mocked data source) and every trust-rule edge case; `bloc_test` for every bloc.
 - pgTAP in `supabase/tests/` for RLS per role (anon, user, banned user, masjid admin, super admin), the `masjid_times` trust rules, the 10-a-day abuse trigger, the 3-admins cap and the history trigger.
-- `theme_contrast_test.dart` in `packages/ui`: every text/background token pair in DESIGN.md is ≥ 4.5:1, light and dark. Fails the build if a token change breaks contrast.
+- `test/core/theme_contrast_test.dart`: every text/background token pair in DESIGN.md is ≥ 4.5:1, light and dark. Fails the build if a token change breaks contrast.
 - Widget smoke tests for each main screen at 360×800, 390×844, 900×1024 and 1440×900, in light and dark, and at 2.0 text scale: render, `expect(tester.takeException(), isNull)`.
 
 ## Build & deploy
 - `tools/build_all.sh <target>` (run from repo root, needs `env.json`, copied from the chosen `env.<env>.json`):
   - `web` — `flutter build web --release`, copy `vercel.json` into `build/web` with the build step switched off, `vercel deploy --prod`.
   - `patch` — `shorebird patch android` against the current `pubspec.yaml` version. Dart-only changes.
-  - `release` — `shorebird release android --artifact apk` (and `appbundle` for Play), copied to `dist/masjid_timer_v<version>+<build>.apk`.
+  - `release` — `shorebird release android --artifact apk` (and `appbundle` for Play), copied to `dist/namazi_v<version>+<build>.apk`.
   - `all` — `web` + `patch`, the everyday deploy.
 - Patch or release: Dart code change = `patch`, no version bump. Asset, font, native plugin or dependency change = bump `version:` in `pubspec.yaml`, then `release`. A patch can't change assets or native code.
 - Jenkins (`Jenkinsfile`, runs on the dev Mac):

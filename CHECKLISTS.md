@@ -22,7 +22,7 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 - [ ] **Turn on deletion protection for the database resource.** Supabase has no per-project delete lock, so: org has only the owner as Owner, everyone else Developer or Read-only; MFA on every Supabase, Vercel, GitHub and Jenkins account; prod project in its own org if collaborators join. (Phase 1)
 - [ ] **Enforce delete permissions and limits on the server.** Covered by RLS + RPC checks above; the UI only hides buttons. pgTAP tests try a delete as every role and expect failure. (Phase 1–3)
 - [ ] **Preview the records a bulk action will affect.** Only bulk-ish action is banning a user: the confirm dialog shows "This hides N open suggestions by <name>" before the ban. (Phase 3)
-- [ ] **Typed confirmation for high-impact deletes.** Hide masjid, ban user, revoke admin, delete own account: the confirm button stays disabled until the masjid name / user name / "DELETE" is typed. Shared `ConfirmDestructiveDialog` in `packages/ui`. (Phase 3)
+- [ ] **Typed confirmation for high-impact deletes.** Hide masjid, ban user, revoke admin, delete own account: the confirm button stays disabled until the masjid name / user name / "DELETE" is typed. Shared `ConfirmDestructiveDialog` in `lib/core/widgets/`. (Phase 3)
 - [ ] **Let users restore eligible items from Trash.** Soft delete everywhere: `masjids.status = hidden`, `time_suggestions.status = hidden`, `masjid_admins.status = revoked`. Super admin has a "Hidden" tab with Restore. Nothing is hard-deleted from the client. (Phase 3)
 - [ ] **Versioning for file storage.** Supabase Storage has no versioning, so proof photos are write-once: path `<user_id>/<claim_id>.jpg`, insert policy only, no `update` or `delete` policy for clients. A new claim gets a new path. (Phase 3)
 - [ ] **Test migrations on a staging copy first.** Every migration: `supabase db reset` locally + pgTAP green → `db push` to staging → `verify_remote.sh` on staging → app smoke on staging → then prod. Before a risky migration, restore last night's prod dump into staging and run it there. (Phase 2 on)
@@ -43,25 +43,25 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 ### UI feel
 - [ ] **Skeleton loading screens.** `StateView` loading = skeleton masjid cards / prayer rows (DESIGN.md). (Phase 1)
 - [ ] **Optimistic UI.** Votes update the count and arrow immediately and roll back with a snackbar on error. Suggestion submit shows the row as "Sending…" in the list. (Phase 2)
-- [ ] **Prevent unnecessary re-renders.** The next-jamat countdown ticks inside its own small widget (one `Timer.periodic` per minute, not per second, aligned to the minute), never by rebuilding the screen. `ref.watch(p.select(...))` for single fields; `const` constructors everywhere the linter allows. (Phase 1)
+- [ ] **Prevent unnecessary re-renders.** The next-jamat countdown ticks inside its own small widget (one `Timer.periodic` per minute, not per second, aligned to the minute), never by rebuilding the screen. `context.select` / `BlocSelector` / `buildWhen` for single fields; `const` constructors everywhere the linter allows. (Phase 1)
 - [ ] **Virtualize long lists.** `ListView.builder` / `SliverList.builder` for nearby, search results, admin queues, moderation log. Never `Column` of a mapped list. (Phase 1)
 - [ ] **Lazy-load images below the screen.** Only images are map tiles (loaded per viewport by flutter_map) and proof photos (loaded only when the super admin opens a claim, via short-lived signed URL). (Phase 3)
 - [ ] **Debounce search inputs.** Area search waits 350ms after the last keystroke and cancels the previous request. (Phase 1)
 
 ### Network and API
-- [ ] **Prevent duplicate API calls.** Riverpod providers are the only fetch path, so two widgets watching the same provider share one request. `masjid_times(id)` is `keepAlive` for 5 minutes. No fetch in `build()`. (Phase 1)
+- [ ] **Prevent duplicate API calls.** Blocs are the only fetch path (bloc → use case → repository), so a page and its child widgets share one request through the bloc above them. The masjid-times repository keeps an in-memory cache per `masjid_id` for 5 minutes. No fetch in `build()`; fetches are bloc events fired once (e.g. in `BlocProvider(create: ...)`). (Phase 1)
 - [ ] **Paginate API results.** `nearby_masjids` returns at most 50 rows ordered by distance. Admin queues, moderation log and suggestions use `.range()` pages of 25. (Phase 1/3)
 - [ ] **Select only the columns you need.** Never `.select()` / `.select('*')`; always list the columns. RPCs return only what the screen shows. (Phase 1, reviewed in code review)
 - [ ] **Fix N+1 queries.** The nearby list must not call `masjid_times` per card. `nearby_masjids` returns each masjid's next jamat (name, time, source) in the same query, and `next_jamat_nearby` gives the banner in one call. (Phase 1)
-- [ ] **Run independent requests in parallel.** Detail page: masjid row and `masjid_times` together (`Future.wait` or two providers), not chained. Startup: location permission and the cached session in parallel. (Phase 1)
-- [ ] **Timeouts for external calls.** `guardPg` wraps every Supabase call in `.timeout(const Duration(seconds: 10))` → `NetworkException`. `geolocator` uses `timeLimit: 8s` then falls back to last known position, then to area search. (Phase 1)
+- [ ] **Run independent requests in parallel.** Detail page: masjid row and `masjid_times` together (`Future.wait` inside the bloc handler), not chained. Startup: location permission and the cached session in parallel. (Phase 1)
+- [ ] **Timeouts for external calls.** `pg()` wraps every Supabase call in `.timeout(const Duration(seconds: 10))` → `NetworkException`. `geolocator` uses `timeLimit: 8s` then falls back to last known position, then to area search. (Phase 1)
 - [ ] **Stream AI responses.** N/A, no AI.
 - [ ] **Move slow tasks to a background job queue.** N/A in-app. The only slow jobs (OSM import, backups, proof purge) already run outside the request path (script, Jenkins, scheduled Edge Function).
 
 ### Database
 - [ ] **Indexes for common queries.** In the migration that creates each table: GIST on `masjids(location)`; unique `masjids(slug)`; `jamat_times(masjid_id, prayer, valid_from desc)`; `time_suggestions(masjid_id, prayer, status)` and `(suggested_by, created_at)` for the 10-a-day trigger; `masjid_admins(user_id, status)`; `moderation_log(created_at desc)`. Check `explain analyze` of `nearby_masjids` on the Mumbai import. (Phase 1–3)
 - [ ] **Connection pooling.** The app goes through PostgREST, already pooled. `tools/osm_import` and backup scripts connect through the Supavisor pooler (port 6543), not direct. (Phase 1)
-- [ ] **Cache frequently accessed data with Redis.** N/A. Data is small and read-mostly; Riverpod `keepAlive` plus HTTP caching cover it. Revisit only if `nearby_masjids` p95 > 300ms under real load.
+- [ ] **Cache frequently accessed data with Redis.** N/A. Data is small and read-mostly; The repository's in-memory cache plus HTTP caching cover it. Revisit only if `nearby_masjids` p95 > 300ms under real load.
 - [ ] **Trace slow backend requests.** No OpenTelemetry in v1. Use Supabase dashboard → Query Performance (`pg_stat_statements`) monthly; anything > 100ms mean gets an index or a rewrite. App side: Sentry performance traces on the four main screens (below). (Before launch)
 - [ ] **Place servers close to the database.** Supabase prod and staging in `ap-south-1` (Mumbai), same as the users. Edge Functions run in that region. (Phase 1)
 - [ ] **Load-balance across app instances.** N/A. Vercel and Supabase are managed; nothing of ours runs as a server.
