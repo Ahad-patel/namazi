@@ -3,6 +3,8 @@
 //
 //   cd tools/osm_import && dart pub get
 //   dart run bin/osm_import.dart ../../supabase/osm_mumbai.sql
+//   dart run bin/osm_import.dart ../../supabase/osm_bhiwandi.sql 19.24,72.98,19.36,73.14
+//   (optional 2nd arg: south,west,north,east bbox; default Greater Mumbai)
 //
 // Then apply the file yourself, local first, then staging, then prod:
 //   psql "$DB_URL" -f supabase/osm_mumbai.sql   (pooler URL, port 6543)
@@ -16,19 +18,24 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 // Greater Mumbai + Thane + Navi Mumbai (south, west, north, east).
-const _bbox = '18.85,72.75,19.35,73.15';
+const _defaultBbox = '18.85,72.75,19.35,73.15';
 
-const _query =
-    '[out:json][timeout:120];'
-    '(nwr["amenity"="place_of_worship"]["religion"="muslim"]($_bbox););'
-    'out center tags;';
+// Many Indian masjids are mapped only as a building or with religion=muslim,
+// without amenity=place_of_worship. Graveyards/madrasas are excluded below.
+String _query(String bbox) =>
+    '[out:json][timeout:120];('
+    'nwr["amenity"="place_of_worship"]["religion"="muslim"]($bbox);'
+    'nwr["building"="mosque"]($bbox);'
+    'nwr["building"="masjid"]($bbox);'
+    ');out center tags;';
 
 Future<void> main(List<String> args) async {
   final out = File(args.isEmpty ? 'osm_mumbai.sql' : args.first);
+  final bbox = args.length > 1 ? args[1] : _defaultBbox;
   final res = await http.post(
     Uri.parse('https://overpass-api.de/api/interpreter'),
     headers: {'User-Agent': 'masjid-timer-osm-import/1.0'},
-    body: {'data': _query},
+    body: {'data': _query(bbox)},
   );
   if (res.statusCode != 200) {
     stderr.writeln('Overpass ${res.statusCode}: ${res.body}');
@@ -36,6 +43,7 @@ Future<void> main(List<String> args) async {
   }
   final elements = (jsonDecode(res.body)['elements'] as List).cast<Map>();
   final slugs = <String>{};
+  final seen = <String>{};
   final rows = <String>[];
   for (final e in elements) {
     final tags = (e['tags'] as Map?)?.cast<String, String>() ?? const {};
@@ -46,6 +54,7 @@ Future<void> main(List<String> args) async {
       continue;
     }
     final osmId = '${e['type']}/${e['id']}';
+    if (!seen.add(osmId)) continue;
     final ur = tags['name:ur'];
     final ar = tags['name:ar'];
     final local = ur ?? ar;
