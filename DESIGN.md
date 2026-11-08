@@ -143,6 +143,17 @@ components:
     typography: "{typography.label}"
     rounded: "{rounded.md}"
     height: 48px
+  state-view:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.on-surface-variant}"
+    typography: "{typography.body}"
+    padding: 24px
+  offline-banner:
+    backgroundColor: "{colors.surface-variant}"
+    textColor: "{colors.on-surface}"
+    typography: "{typography.label}"
+    height: 40px
+    padding: 12px
 ---
 
 ## Overview
@@ -155,17 +166,23 @@ components:
 - Gold `accent` is used as a fill with navy text. Never put gold text on a light surface (it fails contrast).
 - `verified` green is only for the verified badge. Community items use neutral outlines, not a color.
 - Text contrast is ≥ 4.5:1 in both themes, including captions.
+- Contrast is enforced, not eyeballed: `packages/ui/test/theme_contrast_test.dart` checks every text-on-background pair (on-surface/surface, on-surface/background, on-surface-variant/surface, on-primary/primary, on-accent/accent, on-accent-container/accent-container, verified/verified-container, error/surface) in light and dark. Change a token, the test tells you if it broke.
+- The misconfigured screen (no Supabase keys in the build) is the only place colors may be literal, because it renders before the theme exists.
 
 ## Typography
 - Latin text is Manrope. Every time uses `FontFeature.tabularFigures()` so digits don't shift.
 - Arabic names use Noto Naskh Arabic. Urdu names use Noto Nastaliq Urdu, which needs its taller line height.
 - Pick the name font from `masjids.name_script`. If it's null, detect from the Unicode range (U+0600–U+06FF).
 - Times show as `h:mm` plus a smaller AM/PM, following the device's 12/24-hour setting.
+- Fonts are bundled in `apps/masjid_timer/assets/fonts/` (Manrope, Noto Naskh Arabic, Noto Nastaliq Urdu, with their OFL licence files). No `google_fonts`: a first launch offline must still render in the right font, and widget tests must not hit the network.
 
 ## Layout
 - 4px base grid. Page padding is `spacing.page`. Gap between list cards is `spacing.sm`.
 - Mobile first (390px wide). Web content is max 1180px, and lists become a two-column list + map at ≥ 900px.
 - Touch targets ≥ 48px.
+- Responsive sizes every main screen is smoke-tested at: 360×800 (small Android), 390×844 (design width), 900×1024 (two-column breakpoint), 1440×900 (desktop web). No overflow, no exception, at 1.0 and 2.0 text scale.
+- Web keyboard: Tab order follows visual order, Enter/Space activates cards and rows, Esc closes dialogs and sheets, and focus shows a 2px `primary` outline (never removed). The map has visible zoom buttons for keyboard and switch users.
+- Header actions adapt: labelled buttons at ≥ 900px, icon buttons with a tooltip below that. A screen's actions never carry over to the next screen.
 
 ## Elevation & Depth
 - Mostly flat: 1px `outline` borders on cards.
@@ -195,11 +212,40 @@ components:
   - If the masjid has both, show the Latin name as the title and the local-script name as a second line.
   - Distance and times keep their LTR layout.
 
+- **Loading, empty and error states** (shared `StateView` in `packages/ui`, used by every `AsyncValue.when`)
+  - Loading: skeleton rows the shape of the real content (masjid cards, prayer rows). A spinner only for under-a-second actions inside a button.
+  - Empty: one outlined icon, one sentence that says what's missing, one action. "No masjids within 3 km" + "Search a wider area". "No time yet" + "Suggest a time".
+  - Error: a plain-language message for a non-technical reader ("Couldn't reach the server. Check your connection and try again.") + Retry. The raw error sits behind a collapsed "Technical details" line, so a screenshot of a bug report still carries it.
+  - Permission denied (RLS said no): "You don't have permission to do that", never the Postgres text.
+  - Session expired: "Please sign in again" with a Sign in button.
+- **Environment strip**
+  - Non-prod builds only: a 24px strip above the app bar, `error` fill, "STAGING" / "LOCAL" in `label`. Never in prod.
+- **Destructive confirm** (`ConfirmDestructiveDialog` in `packages/ui`)
+  - Title says what happens ("Hide Masjid-e-Noor?"), body says the effect and whether it can be undone ("It disappears for everyone. You can restore it from Hidden.").
+  - A text field asks for the exact name (or "DELETE" for account deletion). The `error`-colored button stays disabled until it matches. Cancel is the default focus.
+- **Consent at first sign-in**
+  - Two unticked checkboxes ("I am 18 or older", "I agree to the Terms and Privacy Policy" with both as links) and a Continue button disabled until both are ticked. No pre-ticked boxes anywhere in the app.
+- **Attribution and trust copy**
+  - Map: flutter_map `RichAttributionWidget` with OpenStreetMap and MapTiler, bottom end corner, always visible.
+  - Masjid detail footer: `caption` in `on-surface-variant`, "Times can change. Confirm with the masjid."
+  - Source badges are tappable and open a short bottom sheet explaining the source.
+- **Offline banner**
+  - A thin `offline-banner` strip under the app bar while there's no connection; cached content stays visible below it. Disappears on reconnect. No modal.
+- **Settings**
+  - Theme as a three-way segmented control (System · Light · Dark), System default.
+  - The version line (`1.2.0+14 · patch 3`) is `caption` in `on-surface-variant`, at the bottom, selectable so it can be copied into a bug report.
+
 ## Do's and Don'ts
 - Do read every color, size and radius from tokens (`context.tokens`, `AppSpacing`, `AppRadius`).
 - Do always show where a time came from (its source) and when it was updated.
-- Do test every screen in dark mode, at 200% text scale, and with an Urdu masjid name.
+- Do test every screen in dark mode, at 200% text scale, and with an Urdu masjid name. The widget smoke tests cover this; add each new screen to them.
+- Do write error and empty-state copy for someone on the way to the masjid, not for a developer.
+- Do give every icon-only control a tooltip and every badge, pin and countdown a semantics label ("Next jamat Asr in 18 minutes").
+- Do make Delete account as easy to find as Sign out.
+- Don't call times "accurate" or "official" anywhere, including store listings and the landing page.
 - Don't use gold for anything except the next jamat.
 - Don't show a community time styled as if it were verified.
 - Don't use emoji, gradients or decorative mosque clip-art. Icons are outlined, 20–24px.
 - Don't truncate masjid names to one line. Allow two lines, then an ellipsis.
+- Don't show a blank screen for any state. Every async view is loading, content, empty or error.
+- Don't use `EdgeInsets.only(left/right)` or `Alignment.centerLeft`. Use the directional versions so RTL names lay out correctly.
