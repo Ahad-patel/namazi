@@ -1,11 +1,11 @@
 {
-    "name": "namazi",
-    "short_name": "namazi",
+    "name": "Masjid Timer",
+    "short_name": "Masjid Timer",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A masjid jamat timer application",
+    "background_color": "#1B2A4A",
+    "theme_color": "#1B2A4A",
+    "description": "Nearby masjids and their jamat times.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

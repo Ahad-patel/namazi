@@ -46,3 +46,14 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Build-time config: real values never in git (env.example.json is the template)
+env.json
+env.local.json
+env.staging.json
+env.prod.json
+/dist/
+
+# Supabase local state
+supabase/.branches
+supabase/.temp

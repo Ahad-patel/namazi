@@ -41,20 +41,20 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 ## 2. Performance (31 fixes)
 
 ### UI feel
-- [ ] **Skeleton loading screens.** `StateView` loading = skeleton masjid cards / prayer rows (DESIGN.md). (Phase 1)
+- [x] **Skeleton loading screens.** `StateView` loading = skeleton masjid cards / prayer rows (DESIGN.md). (Phase 1)
 - [ ] **Optimistic UI.** Votes update the count and arrow immediately and roll back with a snackbar on error. Suggestion submit shows the row as "Sending…" in the list. (Phase 2)
-- [ ] **Prevent unnecessary re-renders.** The next-jamat countdown ticks inside its own small widget (one `Timer.periodic` per minute, not per second, aligned to the minute), never by rebuilding the screen. `context.select` / `BlocSelector` / `buildWhen` for single fields; `const` constructors everywhere the linter allows. (Phase 1)
-- [ ] **Virtualize long lists.** `ListView.builder` / `SliverList.builder` for nearby, search results, admin queues, moderation log. Never `Column` of a mapped list. (Phase 1)
+- [x] **Prevent unnecessary re-renders.** The next-jamat countdown ticks inside its own small widget (one `Timer.periodic` per minute, not per second, aligned to the minute), never by rebuilding the screen. `context.select` / `BlocSelector` / `buildWhen` for single fields; `const` constructors everywhere the linter allows. (Phase 1)
+- [x] **Virtualize long lists.** `ListView.builder` / `SliverList.builder` for nearby, search results, admin queues, moderation log. Never `Column` of a mapped list. (Phase 1)
 - [ ] **Lazy-load images below the screen.** Only images are map tiles (loaded per viewport by flutter_map) and proof photos (loaded only when the super admin opens a claim, via short-lived signed URL). (Phase 3)
-- [ ] **Debounce search inputs.** Area search waits 350ms after the last keystroke and cancels the previous request. (Phase 1)
+- [x] **Debounce search inputs.** Area search waits 350ms after the last keystroke and cancels the previous request. (Phase 1)
 
 ### Network and API
-- [ ] **Prevent duplicate API calls.** Blocs are the only fetch path (bloc → use case → repository), so a page and its child widgets share one request through the bloc above them. The masjid-times repository keeps an in-memory cache per `masjid_id` for 5 minutes. No fetch in `build()`; fetches are bloc events fired once (e.g. in `BlocProvider(create: ...)`). (Phase 1)
+- [x] **Prevent duplicate API calls.** Blocs are the only fetch path (bloc → use case → repository), so a page and its child widgets share one request through the bloc above them. The masjid-times repository keeps an in-memory cache per `masjid_id` for 5 minutes. No fetch in `build()`; fetches are bloc events fired once (e.g. in `BlocProvider(create: ...)`). (Phase 1)
 - [ ] **Paginate API results.** `nearby_masjids` returns at most 50 rows ordered by distance. Admin queues, moderation log and suggestions use `.range()` pages of 25. (Phase 1/3)
-- [ ] **Select only the columns you need.** Never `.select()` / `.select('*')`; always list the columns. RPCs return only what the screen shows. (Phase 1, reviewed in code review)
-- [ ] **Fix N+1 queries.** The nearby list must not call `masjid_times` per card. `nearby_masjids` returns each masjid's next jamat (name, time, source) in the same query, and `next_jamat_nearby` gives the banner in one call. (Phase 1)
-- [ ] **Run independent requests in parallel.** Detail page: masjid row and `masjid_times` together (`Future.wait` inside the bloc handler), not chained. Startup: location permission and the cached session in parallel. (Phase 1)
-- [ ] **Timeouts for external calls.** `pg()` wraps every Supabase call in `.timeout(const Duration(seconds: 10))` → `NetworkException`. `geolocator` uses `timeLimit: 8s` then falls back to last known position, then to area search. (Phase 1)
+- [x] **Select only the columns you need.** Never `.select()` / `.select('*')`; always list the columns. RPCs return only what the screen shows. (Phase 1, reviewed in code review)
+- [x] **Fix N+1 queries.** The nearby list must not call `masjid_times` per card. `nearby_masjids` returns each masjid's next jamat (name, time, source) in the same query, and `next_jamat_nearby` gives the banner in one call. (Phase 1)
+- [x] **Run independent requests in parallel.** Detail page: masjid row and `masjid_times` together (`Future.wait` inside the bloc handler), not chained. Startup: location permission and the cached session in parallel. (Phase 1)
+- [x] **Timeouts for external calls.** `pg()` wraps every Supabase call in `.timeout(const Duration(seconds: 10))` → `NetworkException`. `geolocator` uses `timeLimit: 8s` then falls back to last known position, then to area search. (Phase 1)
 - [ ] **Stream AI responses.** N/A, no AI.
 - [ ] **Move slow tasks to a background job queue.** N/A in-app. The only slow jobs (OSM import, backups, proof purge) already run outside the request path (script, Jenkins, scheduled Edge Function).
 
@@ -73,7 +73,7 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 - [ ] **Split JavaScript by page.** The admin and super-admin features are imported with `deferred as` so the web user never downloads them. (Phase 3)
 - [ ] **Render on the server or at build time.** N/A for the Flutter app (no SSR). The static legal pages (`privacy.html`, `terms.html`) are plain HTML in `web/`. `web/index.html` shows a lightweight HTML splash (logo + "Loading…" in token colors) until Flutter's first frame. (Phase 3)
 - [ ] **Load third-party scripts after the page.** No third-party web scripts in v1. If one is ever added, it loads after first frame.
-- [ ] **Self-host fonts, limit weights.** Fonts bundled (DESIGN.md). Manrope only at 500, 600, 700, 800. Noto Nastaliq Urdu is large: ship one weight (600) only. (Phase 1)
+- [x] **Self-host fonts, limit weights.** Fonts bundled (DESIGN.md). Manrope only at 500, 600, 700, 800. Noto Nastaliq Urdu is large: ship one weight (600) only. (Phase 1)
 - [ ] **WebP / AVIF images.** Proof photos are resized on device before upload: `image_picker` with `maxWidth: 1600, imageQuality: 80` (JPEG; no extra dependency). App icons and any illustration assets as WebP. (Phase 3)
 - [ ] **Remove unused dependencies.** Before each release: check `pubspec.yaml` of every package against its imports; remove anything unused. `flutter build web --analyze-size` and `flutter build apk --analyze-size` numbers go in `NOTES.md` so growth is visible. (Each release)
 
@@ -113,7 +113,7 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 - [ ] **Subprocessor list.** Section in `privacy.html`: Supabase (AWS ap-south-1), Vercel, MapTiler, Sentry, Google (sign-in), plus the email/SMTP provider. (Phase 3)
 
 ### Accessibility
-- [ ] **Colour contrast.** `theme_contrast_test.dart` (CLAUDE.md, DESIGN.md). (Phase 1)
+- [x] **Colour contrast.** `theme_contrast_test.dart` (CLAUDE.md, DESIGN.md). (Phase 1)
 - [ ] **Alt text.** Every icon-only button has a `tooltip` (which is its semantic label); map pins, source badges and the countdown have `Semantics(label: ...)` ("Verified time, updated 3 November", "Next jamat Asr in 18 minutes"). Decorative icons `excludeFromSemantics`. A widget test checks `meetsGuideline(labeledTapTargetGuideline)` and `textContrastGuideline` on main screens. (Phase 1 on)
 - [ ] **Keyboard navigation.** Web: Tab reaches every control in visual order, Enter/Space activates masjid cards and rows, visible focus ring (`outline` 2px in `primary`), Esc closes dialogs and sheets, map has keyboard zoom buttons. Tested by hand on Chrome each release. (Phase 3)
 
@@ -132,9 +132,9 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 
 ### Licences
 - [ ] **Image, font and code licences.** Fonts are OFL (licence files bundled and registered with `LicenseRegistry.addLicense`), icons Material Symbols (Apache 2.0). No stock images. Settings → About → **Open-source licences** opens Flutter's `showLicensePage`. (Phase 1)
-- [ ] **Open-source licence obligations.** Masjid locations from OpenStreetMap are under **ODbL**: show "© OpenStreetMap contributors" and "© MapTiler" on the map (flutter_map `RichAttributionWidget`) and on `/m/:slug`; the masjids table is a derivative database, so if it's offered publicly, it must be under ODbL too. Note this decision in `NOTES.md`. (Phase 1)
+- [x] **Open-source licence obligations.** Masjid locations from OpenStreetMap are under **ODbL**: show "© OpenStreetMap contributors" and "© MapTiler" on the map (flutter_map `RichAttributionWidget`) and on `/m/:slug`; the masjids table is a derivative database, so if it's offered publicly, it must be under ODbL too. Note this decision in `NOTES.md`. (Phase 1)
 - [ ] **DMCA agent registration.** N/A unless the app targets the US. User content is short (names, notes, photos seen only by the super admin). Terms include a "report content" contact and a takedown process; register a DMCA agent if US users become a target.
 
 ### Store-specific (follows from the above)
-- [ ] Android: `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` only, no background location. iOS: `NSLocationWhenInUseUsageDescription` = "Used to find masjids near you. Your location is not stored." (Phase 1)
+- [x] Android: `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` only, no background location. iOS: `NSLocationWhenInUseUsageDescription` = "Used to find masjids near you. Your location is not stored." (Phase 1)
 - [ ] Play Console: Data safety form, account deletion URL, target audience, content rating, privacy policy URL. App Store Connect: App Privacy labels, privacy policy URL, in-app account deletion. (Phase 3)
