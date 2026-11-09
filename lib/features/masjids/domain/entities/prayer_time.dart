@@ -11,6 +11,12 @@ class PrayerTime extends Equatable {
     required this.updatedAt,
     required this.nextAt,
     this.azaan,
+    this.netVotes,
+    this.differingReports = 0,
+    this.stale = false,
+    this.communityAzaan,
+    this.communityJamat,
+    this.communityNetVotes,
   });
 
   final Prayer prayer;
@@ -23,8 +29,35 @@ class PrayerTime extends Equatable {
   /// masjid's timezone). Drives the countdown and the "next" highlight.
   final DateTime? nextAt;
 
+  /// Community rows only.
+  final int? netVotes;
+
+  /// "N people report a different time"; 0 unless the server says >= 2.
+  final int differingReports;
+
+  /// Verified time not updated for 120 days ("May be outdated").
+  final bool stale;
+
+  /// The top community suggestion, set only when [stale].
+  final ClockTime? communityAzaan;
+  final ClockTime? communityJamat;
+  final int? communityNetVotes;
+
   @override
-  List<Object?> get props => [prayer, azaan, jamat, source, updatedAt, nextAt];
+  List<Object?> get props => [
+    prayer,
+    azaan,
+    jamat,
+    source,
+    updatedAt,
+    nextAt,
+    netVotes,
+    differingReports,
+    stale,
+    communityAzaan,
+    communityJamat,
+    communityNetVotes,
+  ];
 }
 
 /// The row to highlight: the soonest upcoming jamat after [now], if any.

@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/pages/consent_page.dart';
+import '../../features/auth/presentation/pages/sign_in_page.dart';
+import '../../features/location/domain/entities/geo_point.dart';
 import '../../features/masjids/domain/entities/masjid.dart';
+import '../../features/masjids/presentation/pages/add_masjid_page.dart';
 import '../../features/masjids/presentation/pages/masjid_detail_page.dart';
 import '../../features/masjids/presentation/pages/nearby_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../widgets/empty_state.dart';
 
-/// Phase 1 routes. Auth redirects arrive with AuthBloc in Phase 2.
+/// No auth redirects: browsing never needs an account, and contributing
+/// goes through `ensureContributor`, which pushes /sign-in and /consent.
 GoRouter createRouter() => GoRouter(
   routes: [
     GoRoute(path: '/', builder: (_, _) => const NearbyPage()),
@@ -16,6 +22,15 @@ GoRouter createRouter() => GoRouter(
       builder: (_, state) => MasjidDetailPage(
         slug: state.pathParameters['slug']!,
         known: state.extra is Masjid ? state.extra! as Masjid : null,
+      ),
+    ),
+    GoRoute(path: '/sign-in', builder: (_, _) => const SignInPage()),
+    GoRoute(path: '/consent', builder: (_, _) => const ConsentPage()),
+    GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
+    GoRoute(
+      path: '/add-masjid',
+      builder: (_, state) => AddMasjidPage(
+        center: state.extra is GeoPoint ? state.extra! as GeoPoint : null,
       ),
     ),
   ],

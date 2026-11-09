@@ -8,10 +8,18 @@ import 'formatters.dart';
 
 /// "Verified · 3 Nov" or "Community · 3 Nov". Tap explains the source.
 class SourceBadge extends StatelessWidget {
-  const SourceBadge({super.key, required this.source, required this.updatedAt});
+  const SourceBadge({
+    super.key,
+    required this.source,
+    required this.updatedAt,
+    this.netVotes,
+  });
 
   final TimeSource source;
   final DateTime updatedAt;
+
+  /// Community only: shown in the explanation sheet.
+  final int? netVotes;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +92,11 @@ class SourceBadge extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                verified ? l10n.sourceVerifiedBody : l10n.sourceCommunityBody,
+                verified
+                    ? l10n.sourceVerifiedBody
+                    : netVotes == null
+                    ? l10n.sourceCommunityBody
+                    : l10n.sourceCommunityBodyVotes(netVotes!),
               ),
             ],
           ),

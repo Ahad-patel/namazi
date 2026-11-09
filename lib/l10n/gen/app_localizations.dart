@@ -477,6 +477,432 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading'**
   String get loading;
+
+  /// No description provided for @errorRateLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached the limit for now. Please try again later.'**
+  String get errorRateLimit;
+
+  /// No description provided for @errorSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'That didn\'t work. Check the code, or ask for a new one.'**
+  String get errorSignIn;
+
+  /// No description provided for @bannedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account can\'t add or vote on times. You can still browse.'**
+  String get bannedNotice;
+
+  /// No description provided for @signInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to contribute'**
+  String get signInTitle;
+
+  /// No description provided for @signInBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Browsing never needs an account. Sign in to suggest times, vote, or add a missing masjid.'**
+  String get signInBody;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @or.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get or;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @emailMeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Email me a code'**
+  String get emailMeCode;
+
+  /// No description provided for @codeSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a code to {email}. It expires in a few minutes.'**
+  String codeSentTo(String email);
+
+  /// No description provided for @codeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code from the email'**
+  String get codeLabel;
+
+  /// No description provided for @verifyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get verifyCode;
+
+  /// No description provided for @useDifferentEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different email'**
+  String get useDifferentEmail;
+
+  /// No description provided for @resendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a new code'**
+  String get resendCode;
+
+  /// No description provided for @consentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you contribute'**
+  String get consentTitle;
+
+  /// No description provided for @consentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your suggestions and votes help others find the right jamat time. Please confirm both to continue.'**
+  String get consentBody;
+
+  /// No description provided for @consentAdult.
+  ///
+  /// In en, this message translates to:
+  /// **'I am 18 or older'**
+  String get consentAdult;
+
+  /// No description provided for @consentTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the Terms and Privacy Policy'**
+  String get consentTerms;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// No description provided for @terms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms'**
+  String get terms;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @sourceCommunityBodyVotes.
+  ///
+  /// In en, this message translates to:
+  /// **'{votes, plural, =1{Suggested by the community, 1 net vote.} other{Suggested by the community, {votes} net votes.}}'**
+  String sourceCommunityBodyVotes(int votes);
+
+  /// No description provided for @mayBeOutdated.
+  ///
+  /// In en, this message translates to:
+  /// **'May be outdated'**
+  String get mayBeOutdated;
+
+  /// No description provided for @differingReports.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} people report a different time'**
+  String differingReports(int count);
+
+  /// No description provided for @communityPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Community:'**
+  String get communityPrefix;
+
+  /// No description provided for @suggest.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest'**
+  String get suggest;
+
+  /// No description provided for @voteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vote wasn\'t saved. {reason}'**
+  String voteFailed(String reason);
+
+  /// No description provided for @communitySuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Community suggestions'**
+  String get communitySuggestions;
+
+  /// No description provided for @suggestTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a time'**
+  String get suggestTime;
+
+  /// No description provided for @noSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No suggestions yet.'**
+  String get noSuggestions;
+
+  /// No description provided for @suggestedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested {date}'**
+  String suggestedOn(String date);
+
+  /// No description provided for @suggestedOnYours.
+  ///
+  /// In en, this message translates to:
+  /// **'Your suggestion · {date}'**
+  String suggestedOnYours(String date);
+
+  /// No description provided for @upvote.
+  ///
+  /// In en, this message translates to:
+  /// **'Upvote'**
+  String get upvote;
+
+  /// No description provided for @downvote.
+  ///
+  /// In en, this message translates to:
+  /// **'Downvote'**
+  String get downvote;
+
+  /// No description provided for @netVotesSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{votes, plural, =1{1 net vote} other{{votes} net votes}}'**
+  String netVotesSemantics(int votes);
+
+  /// No description provided for @suggestionThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. Your suggestion is listed under Community suggestions.'**
+  String get suggestionThanks;
+
+  /// No description provided for @suggestTimeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It shows under Community suggestions straight away. A new suggestion for the same namaz replaces your old one.'**
+  String get suggestTimeBody;
+
+  /// No description provided for @jamatTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Jamat time'**
+  String get jamatTime;
+
+  /// No description provided for @azaanTimeOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Azaan time (optional)'**
+  String get azaanTimeOptional;
+
+  /// No description provided for @azaanAfterJamat.
+  ///
+  /// In en, this message translates to:
+  /// **'Azaan must be at or before the jamat time.'**
+  String get azaanAfterJamat;
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional), e.g. \"From the notice board\"'**
+  String get noteOptional;
+
+  /// No description provided for @sending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get sending;
+
+  /// No description provided for @submit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get submit;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @addMasjid.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a masjid'**
+  String get addMasjid;
+
+  /// No description provided for @addMasjidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map where the masjid is, then enter its name. It appears once it has been reviewed.'**
+  String get addMasjidBody;
+
+  /// No description provided for @addMasjidThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. The masjid will appear once it\'s been reviewed.'**
+  String get addMasjidThanks;
+
+  /// No description provided for @pinDroppedSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Masjid location pin'**
+  String get pinDroppedSemantics;
+
+  /// No description provided for @tapMapForPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to place the pin.'**
+  String get tapMapForPin;
+
+  /// No description provided for @pinDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin placed. Tap again to move it.'**
+  String get pinDropped;
+
+  /// No description provided for @useMapCentre.
+  ///
+  /// In en, this message translates to:
+  /// **'Use map centre'**
+  String get useMapCentre;
+
+  /// No description provided for @masjidNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Masjid name'**
+  String get masjidNameLabel;
+
+  /// No description provided for @masjidLocalNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name in Arabic or Urdu (optional)'**
+  String get masjidLocalNameLabel;
+
+  /// No description provided for @scriptArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic script'**
+  String get scriptArabic;
+
+  /// No description provided for @scriptUrdu.
+  ///
+  /// In en, this message translates to:
+  /// **'Urdu script'**
+  String get scriptUrdu;
+
+  /// No description provided for @submitForReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Send for review'**
+  String get submitForReview;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get theme;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @licences.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licences'**
+  String get licences;
+
+  /// No description provided for @versionLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String versionLine(String version);
+
+  /// No description provided for @signedOutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re browsing without an account.'**
+  String get signedOutBody;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {who}'**
+  String signedInAs(String who);
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @errorOutsideWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'That time is outside this namaz\'s time at this masjid.'**
+  String get errorOutsideWindow;
+
+  /// No description provided for @outsideWindowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time inside the window above.'**
+  String get outsideWindowHint;
+
+  /// No description provided for @windowToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer} here today:'**
+  String windowToday(String prayer);
 }
 
 class _AppLocalizationsDelegate

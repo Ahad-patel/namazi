@@ -39,6 +39,18 @@ class ServerFailure extends Failure {
   const ServerFailure([super.detail]);
 }
 
+class RateLimitFailure extends Failure {
+  const RateLimitFailure([super.detail]);
+}
+
+class ValidationFailure extends Failure {
+  const ValidationFailure([super.detail]);
+}
+
+class SignInFailure extends Failure {
+  const SignInFailure([super.detail]);
+}
+
 class LocationFailure extends Failure {
   const LocationFailure(this.problem) : super(null);
 

@@ -68,5 +68,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Google sign-in returns here (AuthRemoteDataSource.mobileRedirect). -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.ska.namazi</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

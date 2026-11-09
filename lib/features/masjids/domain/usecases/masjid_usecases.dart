@@ -5,6 +5,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
 import '../../../location/domain/entities/geo_point.dart';
 import '../entities/masjid.dart';
+import '../entities/new_masjid.dart';
 import '../entities/nearby_masjid.dart';
 import '../entities/prayer_time.dart';
 import '../repositories/masjid_repository.dart';
@@ -54,4 +55,11 @@ class GetMasjidTimes implements UseCase<List<PrayerTime>, TimesParams> {
   @override
   Future<Either<Failure, List<PrayerTime>>> call(TimesParams p) =>
       _repo.times(p.masjidId, refresh: p.refresh);
+}
+
+class AddMasjid implements UseCase<String, NewMasjid> {
+  AddMasjid(this._repo);
+  final MasjidRepository _repo;
+  @override
+  Future<Either<Failure, String>> call(NewMasjid m) => _repo.add(m);
 }

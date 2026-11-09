@@ -18,12 +18,16 @@ class PrayerRow extends StatelessWidget {
     this.time,
     this.isNext = false,
     this.onPassed,
+    this.onSuggest,
   });
 
   final Prayer prayer;
   final PrayerTime? time;
   final bool isNext;
   final VoidCallback? onPassed;
+
+  /// "Suggest" link under a missing time.
+  final VoidCallback? onSuggest;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +73,30 @@ class PrayerRow extends StatelessWidget {
                   ),
                 if (t != null) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  SourceBadge(source: t.source, updatedAt: t.updatedAt),
+                  SourceBadge(
+                    source: t.source,
+                    updatedAt: t.updatedAt,
+                    netVotes: t.netVotes,
+                  ),
+                  if (t.stale) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      l10n.mayBeOutdated,
+                      style: tokens.caption.copyWith(
+                        color: isNext ? fg : c.error,
+                      ),
+                    ),
+                    if (t.communityJamat != null)
+                      _CommunityLine(
+                        time: t.communityJamat!,
+                        style: tokens.caption.copyWith(color: subtle),
+                      ),
+                  ],
+                  if (t.differingReports > 0)
+                    Text(
+                      l10n.differingReports(t.differingReports),
+                      style: tokens.caption.copyWith(color: subtle),
+                    ),
                 ],
               ],
             ),
@@ -96,6 +123,11 @@ class PrayerRow extends StatelessWidget {
                           textAlign: TextAlign.end,
                           style: tokens.caption.copyWith(color: subtle),
                         ),
+                        if (onSuggest != null)
+                          TextButton(
+                            onPressed: onSuggest,
+                            child: Text(l10n.suggest, textAlign: TextAlign.end),
+                          ),
                       ],
                     )
                   : TimeText(t.jamat, style: tokens.time, color: fg),
@@ -105,4 +137,21 @@ class PrayerRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Community: 1:35 PM" under a stale verified time.
+class _CommunityLine extends StatelessWidget {
+  const _CommunityLine({required this.time, required this.style});
+
+  final ClockTime time;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      Text('${AppLocalizations.of(context).communityPrefix} ', style: style),
+      TimeText(time, style: style),
+    ],
+  );
 }

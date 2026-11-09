@@ -18,6 +18,10 @@ class ClockTime extends Equatable implements Comparable<ClockTime> {
   final int hour;
   final int minute;
 
+  /// `HH:MM`, the form Postgres `time` accepts.
+  String get hhmm =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
   @override
   int compareTo(ClockTime other) =>
       (hour * 60 + minute) - (other.hour * 60 + other.minute);

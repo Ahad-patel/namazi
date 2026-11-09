@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:namazi/core/error/failures.dart';
+import 'package:namazi/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:namazi/features/masjids/presentation/bloc/masjid_detail_bloc.dart';
 import 'package:namazi/features/masjids/presentation/bloc/nearby_bloc.dart';
 import 'package:namazi/features/masjids/presentation/pages/masjid_detail_page.dart';
 import 'package:namazi/features/masjids/presentation/pages/nearby_page.dart';
+import 'package:namazi/features/suggestions/presentation/bloc/suggestions_bloc.dart';
 
 import '../../../helpers/fixtures.dart';
 import '../../../helpers/pump_app.dart';
@@ -16,6 +18,47 @@ class _MockNearby extends MockBloc<NearbyEvent, NearbyState>
 
 class _MockDetail extends MockBloc<MasjidDetailEvent, MasjidDetailState>
     implements MasjidDetailBloc {}
+
+class _MockSuggestions extends MockBloc<SuggestionsEvent, SuggestionsState>
+    implements SuggestionsBloc {}
+
+class _MockAuth extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+
+/// Detail view with its suggestions + auth blocs mocked.
+Widget _detail(MasjidDetailState state, {SuggestionsState? suggestions}) {
+  final bloc = _MockDetail();
+  whenListen(
+    bloc,
+    const Stream<MasjidDetailState>.empty(),
+    initialState: state,
+  );
+  final sBloc = _MockSuggestions();
+  whenListen(
+    sBloc,
+    const Stream<SuggestionsState>.empty(),
+    initialState:
+        suggestions ??
+        SuggestionsState(
+          status: SuggestionsStatus.loaded,
+          masjidId: 'm2',
+          items: suggestionList,
+        ),
+  );
+  final auth = _MockAuth();
+  whenListen(
+    auth,
+    const Stream<AuthState>.empty(),
+    initialState: const AuthState(status: AuthStatus.unauthenticated),
+  );
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<AuthBloc>.value(value: auth),
+      BlocProvider<MasjidDetailBloc>.value(value: bloc),
+      BlocProvider<SuggestionsBloc>.value(value: sBloc),
+    ],
+    child: MasjidDetailView(clock: () => now),
+  );
+}
 
 final _nearbyStates = {
   'loading': const NearbyState(status: NearbyStatus.locating),
@@ -42,6 +85,11 @@ final _detailStates = {
     status: MasjidDetailStatus.loaded,
     masjid: masjidUrdu,
     times: fullTimes,
+  ),
+  'trust rules': MasjidDetailState(
+    status: MasjidDetailStatus.loaded,
+    masjid: masjidLatin,
+    times: trustTimes,
   ),
   'empty': const MasjidDetailState(
     status: MasjidDetailStatus.empty,
@@ -89,17 +137,27 @@ void main() {
 
         for (final MapEntry(key: name, value: state) in _detailStates.entries) {
           testWidgets('MasjidDetailView $name $tag', (tester) async {
-            final bloc = _MockDetail();
-            whenListen(
-              bloc,
-              const Stream<MasjidDetailState>.empty(),
-              initialState: state,
-            );
             await tester.pumpApp(
-              BlocProvider<MasjidDetailBloc>.value(
-                value: bloc,
-                child: MasjidDetailView(clock: () => now),
-              ),
+              _detail(state),
+              size: size,
+              mode: mode,
+              textScale: scale,
+            );
+            expect(tester.takeException(), isNull);
+          });
+        }
+
+        for (final MapEntry(key: name, value: ss) in {
+          'loading': const SuggestionsState(status: SuggestionsStatus.loading),
+          'empty': const SuggestionsState(status: SuggestionsStatus.empty),
+          'error': const SuggestionsState(
+            status: SuggestionsStatus.error,
+            failure: NetworkFailure('offline'),
+          ),
+        }.entries) {
+          testWidgets('Detail suggestions $name $tag', (tester) async {
+            await tester.pumpApp(
+              _detail(_detailStates['loaded']!, suggestions: ss),
               size: size,
               mode: mode,
               textScale: scale,
@@ -111,22 +169,30 @@ void main() {
     }
   }
 
-  testWidgets('detail highlights exactly one next row', (tester) async {
-    final bloc = _MockDetail();
-    whenListen(
-      bloc,
-      const Stream<MasjidDetailState>.empty(),
-      initialState: _detailStates['loaded']!,
-    );
+  testWidgets('trust rules: stale, differing reports, community', (
+    tester,
+  ) async {
     await tester.pumpApp(
-      BlocProvider<MasjidDetailBloc>.value(
-        value: bloc,
-        child: MasjidDetailView(clock: () => now),
-      ),
+      _detail(_detailStates['trust rules']!),
+      size: smokeSizes[1],
+    );
+    expect(find.text('May be outdated'), findsOneWidget);
+    expect(find.text('4 people report a different time'), findsOneWidget);
+    expect(find.textContaining('Community ·'), findsOneWidget);
+    expect(find.text('Suggest'), findsNWidgets(4)); // zuhr, asr, isha, jummah
+  });
+
+  testWidgets('detail highlights exactly one next row', (tester) async {
+    await tester.pumpApp(
+      _detail(_detailStates['loaded']!),
       size: smokeSizes[1],
     );
     expect(find.textContaining('Next · in'), findsOneWidget);
     expect(find.text('Not available'), findsOneWidget); // no Jummah time
+    await tester.scrollUntilVisible(find.text('Your suggestion · 6 Nov'), 200);
+    expect(find.text('Community suggestions'), findsOneWidget);
+    // no vote buttons on your own suggestion
+    expect(find.byTooltip('Upvote'), findsOneWidget);
   });
 
   testWidgets('nearby banner has a countdown semantics label', (tester) async {

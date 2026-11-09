@@ -129,6 +129,9 @@ CHECKLISTS.md            # data-loss, performance and launch/legal checklists, t
 - Each `Failure` carries the raw technical `detail`. The shared `ErrorView` maps the subtype to a plain-language ARB string and hides the detail behind "Technical details".
 - No `try` outside `data/`. Blocs `fold` the `Either`; widgets see errors only as a bloc state.
 
+## Git
+- **Hard rule: never run `git commit`, `git push`, or open a PR, and don't offer to.** Leave changes in the working tree; the owner always commits.
+
 ## Coding rules
 - Before finishing any task: `./tools/check.sh` passes (`dart format --set-exit-if-changed`, `flutter analyze` with 0 issues, all tests).
 - No hardcoded colors, strings or sizes:

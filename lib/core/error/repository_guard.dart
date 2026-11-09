@@ -21,6 +21,12 @@ mixin RepositoryGuard {
       return Left(SessionExpiredFailure(e.message));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
+    } on RateLimitException catch (e) {
+      return Left(RateLimitFailure(e.message));
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on SignInException catch (e) {
+      return Left(SignInFailure(e.message));
     } on LocationException catch (e) {
       return Left(LocationFailure(e.problem));
     } on ServerException catch (e) {

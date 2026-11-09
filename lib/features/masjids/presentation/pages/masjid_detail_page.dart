@@ -14,6 +14,10 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../auth/presentation/contributor_gate.dart';
+import '../../../suggestions/presentation/bloc/suggestions_bloc.dart';
+import '../../../suggestions/presentation/widgets/suggest_time_sheet.dart';
+import '../../../suggestions/presentation/widgets/suggestions_section.dart';
 import '../../domain/entities/masjid.dart';
 import '../../domain/entities/prayer.dart';
 import '../../domain/entities/prayer_time.dart';
@@ -28,9 +32,15 @@ class MasjidDetailPage extends StatelessWidget {
   final Masjid? known;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (_) =>
-        sl<MasjidDetailBloc>()..add(MasjidDetailRequested(slug, known: known)),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (_) =>
+            sl<MasjidDetailBloc>()
+              ..add(MasjidDetailRequested(slug, known: known)),
+      ),
+      BlocProvider(create: (_) => sl<SuggestionsBloc>()),
+    ],
     child: const MasjidDetailView(),
   );
 }
@@ -51,29 +61,84 @@ class MasjidDetailView extends StatelessWidget {
           onPressed: () => context.canPop() ? context.pop() : context.go('/'),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: AppConstants.wideBreakpoint,
+      body: MultiBlocListener(
+        listeners: [
+          // Suggestions load once the masjid id is known (a shared link
+          // only has the slug).
+          BlocListener<MasjidDetailBloc, MasjidDetailState>(
+            listenWhen: (a, b) =>
+                b.masjid != null && a.masjid?.id != b.masjid?.id,
+            listener: (context, s) => context.read<SuggestionsBloc>().add(
+              SuggestionsRequested(s.masjid!.id),
+            ),
           ),
-          child: BlocBuilder<MasjidDetailBloc, MasjidDetailState>(
-            builder: (context, s) => ListView(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpacing.page,
-                0,
-                AppSpacing.page,
-                AppSpacing.xl,
+          // A submit or vote can change what masjid_times displays.
+          BlocListener<SuggestionsBloc, SuggestionsState>(
+            listenWhen: (a, b) => a.changes != b.changes,
+            listener: (context, _) => context.read<MasjidDetailBloc>().add(
+              const MasjidDetailRefreshed(),
+            ),
+          ),
+        ],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppConstants.wideBreakpoint,
+            ),
+            child: BlocBuilder<MasjidDetailBloc, MasjidDetailState>(
+              builder: (context, s) => CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpacing.page,
+                    ),
+                    sliver: SliverList.list(
+                      children: [
+                        if (s.masjid != null) _Header(masjid: s.masjid!),
+                        const SizedBox(height: AppSpacing.lg),
+                        ..._body(context, s),
+                      ],
+                    ),
+                  ),
+                  if (s.masjid != null &&
+                      (s.status == MasjidDetailStatus.loaded ||
+                          s.status == MasjidDetailStatus.empty))
+                    SliverPadding(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpacing.page,
+                      ),
+                      sliver: SuggestionsSection(
+                        onSuggest: (p) => _suggest(context, s.masjid!, p),
+                      ),
+                    ),
+                  if (s.status == MasjidDetailStatus.loaded ||
+                      s.status == MasjidDetailStatus.empty)
+                    SliverPadding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        AppSpacing.page,
+                        0,
+                        AppSpacing.page,
+                        AppSpacing.xl,
+                      ),
+                      sliver: SliverToBoxAdapter(child: _Footer()),
+                    ),
+                ],
               ),
-              children: [
-                if (s.masjid != null) _Header(masjid: s.masjid!),
-                const SizedBox(height: AppSpacing.lg),
-                ..._body(context, s),
-              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _suggest(
+    BuildContext context,
+    Masjid masjid,
+    Prayer? prayer,
+  ) async {
+    if (!await ensureContributor(context)) return;
+    if (!context.mounted) return;
+    await showSuggestSheet(context, masjidId: masjid.id, prayer: prayer);
   }
 
   List<Widget> _body(BuildContext context, MasjidDetailState s) {
@@ -98,16 +163,20 @@ class MasjidDetailView extends StatelessWidget {
           ),
       ],
       MasjidDetailStatus.empty => [
-        EmptyState(icon: Icons.schedule, message: l10n.emptyTimes),
-        _Footer(),
+        EmptyState(
+          icon: Icons.schedule,
+          message: l10n.emptyTimes,
+          actionLabel: l10n.suggestTime,
+          onAction: () => _suggest(context, s.masjid!, null),
+        ),
       ],
       MasjidDetailStatus.loaded => [
         _TimesTable(
           times: s.times,
           now: clock(),
           onPassed: () => bloc.add(const MasjidDetailRefreshed()),
+          onSuggest: (p) => _suggest(context, s.masjid!, p),
         ),
-        _Footer(),
       ],
     };
   }
@@ -159,11 +228,13 @@ class _TimesTable extends StatelessWidget {
     required this.times,
     required this.now,
     required this.onPassed,
+    required this.onSuggest,
   });
 
   final List<PrayerTime> times;
   final DateTime now;
   final VoidCallback onPassed;
+  final ValueChanged<Prayer> onSuggest;
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +279,7 @@ class _TimesTable extends StatelessWidget {
               time: byPrayer[p],
               isNext: next != null && next.prayer == p,
               onPassed: onPassed,
+              onSuggest: () => onSuggest(p),
             ),
           ),
       ],

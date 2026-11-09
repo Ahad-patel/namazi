@@ -9,6 +9,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_cubit.dart';
 import 'core/widgets/app_frame.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'l10n/gen/app_localizations.dart';
 
 void main() => bootstrap(NamaziApp.new);
@@ -25,8 +26,11 @@ class _NamaziAppState extends State<NamaziApp> {
   late final _online = sl<NetworkInfo>().onStatusChange;
 
   @override
-  Widget build(BuildContext context) => BlocProvider.value(
-    value: sl<ThemeCubit>(),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider.value(value: sl<ThemeCubit>()),
+      BlocProvider.value(value: sl<AuthBloc>()),
+    ],
     child: BlocBuilder<ThemeCubit, ThemeMode>(
       builder: (context, mode) => MaterialApp.router(
         onGenerateTitle: (context) => AppLocalizations.of(context).appName,
