@@ -63,3 +63,12 @@ class SignInException implements Exception {
   @override
   String toString() => 'SignInException: $message';
 }
+
+/// The server rejected the input (e.g. `MT422`: a time outside its namaz
+/// window).
+class ValidationException implements Exception {
+  ValidationException(this.message);
+  final String message;
+  @override
+  String toString() => 'ValidationException: $message';
+}

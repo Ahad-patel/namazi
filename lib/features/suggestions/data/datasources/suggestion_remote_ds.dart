@@ -17,6 +17,13 @@ class SuggestionRemoteDataSource {
     return [for (final r in rows) SuggestionModel.fromJson(r)];
   });
 
+  Future<List<PrayerWindowModel>> windows(String masjidId) => pg(() async {
+    final rows = await _client
+        .rpc('prayer_windows', params: {'masjid_id': masjidId})
+        .select(PrayerWindowModel.columns);
+    return [for (final r in rows) PrayerWindowModel.fromJson(r)];
+  });
+
   Future<void> submit(SuggestionDraft d) => pg(
     () =>
         _client.from('time_suggestions').insert(SuggestionModel.draftToJson(d)),

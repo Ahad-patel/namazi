@@ -14,6 +14,7 @@ class SuggestionsState extends Equatable {
     this.submitFailure,
     this.voteFailure,
     this.changes = 0,
+    this.windows = const [],
   });
 
   final SuggestionsStatus status;
@@ -30,6 +31,16 @@ class SuggestionsState extends Equatable {
   /// `masjid_times` (a vote can change what is displayed).
   final int changes;
 
+  /// Today's allowed time per namaz (empty until the sheet first opens).
+  final List<PrayerWindow> windows;
+
+  PrayerWindow? windowFor(Prayer p) {
+    for (final w in windows) {
+      if (w.prayer == p) return w;
+    }
+    return null;
+  }
+
   SuggestionsState copyWith({
     SuggestionsStatus? status,
     String? masjidId,
@@ -40,6 +51,7 @@ class SuggestionsState extends Equatable {
     Failure? voteFailure,
     bool clearVoteFailure = false,
     int? changes,
+    List<PrayerWindow>? windows,
   }) => SuggestionsState(
     status: status ?? this.status,
     masjidId: masjidId ?? this.masjidId,
@@ -49,6 +61,7 @@ class SuggestionsState extends Equatable {
     submitFailure: submitFailure ?? this.submitFailure,
     voteFailure: clearVoteFailure ? null : voteFailure ?? this.voteFailure,
     changes: changes ?? this.changes,
+    windows: windows ?? this.windows,
   );
 
   @override
@@ -61,5 +74,6 @@ class SuggestionsState extends Equatable {
     submitFailure,
     voteFailure,
     changes,
+    windows,
   ];
 }

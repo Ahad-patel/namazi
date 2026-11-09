@@ -8,6 +8,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../masjids/domain/entities/prayer.dart';
 import '../../../masjids/presentation/widgets/formatters.dart';
 import '../../../masjids/presentation/widgets/time_text.dart';
+import '../../domain/entities/prayer_window.dart';
 import '../../domain/entities/suggestion.dart';
 import '../bloc/suggestions_bloc.dart';
 
@@ -70,12 +71,17 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
   bool get _azaanAfterJamat =>
       _azaan != null && _jamat != null && _azaan!.compareTo(_jamat!) > 0;
 
-  Future<ClockTime?> _pick(ClockTime? current) async {
+  /// True when [t] is set and outside today's window for the chosen namaz.
+  bool _outside(PrayerWindow? w, ClockTime? t) =>
+      w != null && t != null && !w.contains(t);
+
+  Future<ClockTime?> _pick(ClockTime? current, PrayerWindow? w) async {
+    final start = current ?? w?.starts;
     final t = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(
-        hour: current?.hour ?? 13,
-        minute: current?.minute ?? 0,
+        hour: start?.hour ?? 13,
+        minute: start?.minute ?? 0,
       ),
     );
     return t == null ? null : ClockTime(t.hour, t.minute);
@@ -97,6 +103,9 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
       builder: (context, s) {
         final busy = s.submitStatus == SubmitStatus.submitting;
         final jamat = _jamat;
+        final window = s.windowFor(_prayer);
+        final outside = _outside(window, jamat) || _outside(window, _azaan);
+        final warn = tokens.caption.copyWith(color: tokens.colors.error);
         return SingleChildScrollView(
           padding: EdgeInsetsDirectional.fromSTEB(
             AppSpacing.page,
@@ -134,6 +143,18 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
                     ),
                 ],
               ),
+              if (window != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                _WindowLine(
+                  prayer: _prayer,
+                  window: window,
+                  style: outside
+                      ? warn
+                      : tokens.caption.copyWith(
+                          color: tokens.colors.onSurfaceVariant,
+                        ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               _TimeField(
                 label: l10n.jamatTime,
@@ -141,7 +162,7 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
                 onPick: busy
                     ? null
                     : () async {
-                        final t = await _pick(jamat);
+                        final t = await _pick(jamat, window);
                         if (t != null) setState(() => _jamat = t);
                       },
               ),
@@ -152,7 +173,7 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
                 onPick: busy
                     ? null
                     : () async {
-                        final t = await _pick(_azaan ?? jamat);
+                        final t = await _pick(_azaan ?? jamat, window);
                         if (t != null) setState(() => _azaan = t);
                       },
                 onClear: busy || _azaan == null
@@ -162,10 +183,12 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
               if (_azaanAfterJamat)
                 Padding(
                   padding: const EdgeInsetsDirectional.only(top: AppSpacing.xs),
-                  child: Text(
-                    l10n.azaanAfterJamat,
-                    style: tokens.caption.copyWith(color: tokens.colors.error),
-                  ),
+                  child: Text(l10n.azaanAfterJamat, style: warn),
+                ),
+              if (outside)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: AppSpacing.xs),
+                  child: Text(l10n.outsideWindowHint, style: warn),
                 ),
               const SizedBox(height: AppSpacing.md),
               TextField(
@@ -190,7 +213,7 @@ class _SuggestTimeSheetState extends State<SuggestTimeSheet> {
                   ),
                 ),
               FilledButton(
-                onPressed: busy || jamat == null || _azaanAfterJamat
+                onPressed: busy || jamat == null || _azaanAfterJamat || outside
                     ? null
                     : () => context.read<SuggestionsBloc>().add(
                         SuggestionSubmitted(
@@ -253,6 +276,33 @@ class _TimeField extends StatelessWidget {
             onPressed: onClear,
             icon: const Icon(Icons.close),
           ),
+      ],
+    );
+  }
+}
+
+/// "Fajr here today: 5:17 AM – 6:53 AM".
+class _WindowLine extends StatelessWidget {
+  const _WindowLine({
+    required this.prayer,
+    required this.window,
+    required this.style,
+  });
+
+  final Prayer prayer;
+  final PrayerWindow window;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text('${l10n.windowToday(prayerName(l10n, prayer))} ', style: style),
+        TimeText(window.starts, style: style),
+        Text(' – ', style: style),
+        TimeText(window.ends, style: style),
       ],
     );
   }

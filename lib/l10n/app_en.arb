@@ -324,5 +324,15 @@
       }
     }
   },
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "errorOutsideWindow": "That time is outside this namaz's time at this masjid.",
+  "outsideWindowHint": "Pick a time inside the window above.",
+  "windowToday": "{prayer} here today:",
+  "@windowToday": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  }
 }

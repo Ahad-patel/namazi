@@ -69,15 +69,15 @@ select results_eq(
   'new suggestion replaces the old one (one open per user/masjid/namaz)');
 select throws_ok(
   $$insert into public.time_suggestions (masjid_id, prayer, jamat_time, suggested_by)
-    values ('aaaaaaaa-0000-0000-0000-000000000001', 'isha', '20:30', '22222222-2222-2222-2222-222222222222')$$,
+    values ('aaaaaaaa-0000-0000-0000-000000000001', 'isha', '21:00', '22222222-2222-2222-2222-222222222222')$$,
   '42501', null, 'cannot suggest as someone else');
 select throws_ok(
   $$insert into public.time_suggestions (masjid_id, prayer, jamat_time, net_votes)
-    values ('aaaaaaaa-0000-0000-0000-000000000001', 'isha', '20:30', 99)$$,
+    values ('aaaaaaaa-0000-0000-0000-000000000001', 'isha', '21:00', 99)$$,
   '42501', null, 'cannot seed net_votes');
 select throws_ok(
   $$insert into public.time_suggestions (masjid_id, prayer, jamat_time)
-    values ('aaaaaaaa-0000-0000-0000-000000000003', 'isha', '20:30')$$,
+    values ('aaaaaaaa-0000-0000-0000-000000000003', 'isha', '21:00')$$,
   '42501', null, 'cannot suggest for a hidden masjid');
 update public.time_suggestions set jamat_time = '05:00' where prayer = 'zuhr';
 delete from public.time_suggestions where prayer = 'zuhr';
@@ -94,13 +94,15 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 select lives_ok(
   $$insert into public.time_suggestions (masjid_id, prayer, jamat_time)
-    select 'aaaaaaaa-0000-0000-0000-000000000001', p, '12:00'
-    from unnest(array['fajr','asr','maghrib','isha','jummah']::public.prayer[]) p$$,
+    select 'aaaaaaaa-0000-0000-0000-000000000001', p, w.starts + interval '15 minutes'
+    from unnest(array['fajr','asr','maghrib','isha','jummah']::public.prayer[]) p
+    cross join lateral app.prayer_window(p, 19.0760, 72.8777, 'Asia/Kolkata', current_date) w$$,
   'suggestions 3-7 today');
 select lives_ok(
   $$insert into public.time_suggestions (masjid_id, prayer, jamat_time)
-    select 'aaaaaaaa-0000-0000-0000-000000000001', p, '12:30'
-    from unnest(array['fajr','asr','maghrib']::public.prayer[]) p$$,
+    select 'aaaaaaaa-0000-0000-0000-000000000001', p, w.starts + interval '20 minutes'
+    from unnest(array['fajr','asr','maghrib']::public.prayer[]) p
+    cross join lateral app.prayer_window(p, 19.0760, 72.8777, 'Asia/Kolkata', current_date) w$$,
   'suggestions 8-10 today');
 select throws_ok(
   $$insert into public.time_suggestions (masjid_id, prayer, jamat_time)

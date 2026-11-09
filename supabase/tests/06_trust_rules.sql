@@ -27,9 +27,10 @@ insert into public.time_suggestions (masjid_id, prayer, jamat_time, suggested_by
   -- asr: verified is stale, community says 17:15
   ('aaaaaaaa-0000-0000-0000-000000000001', 'asr', '17:15', '11111111-1111-1111-1111-111111111111', 3, 'open', now()),
   -- maghrib: no verified; two tie on 2 votes, newest wins; 1 vote never shows
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'maghrib', '18:40', '11111111-1111-1111-1111-111111111111', 2, 'open', now() - interval '2 hours'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'maghrib', '18:45', '22222222-2222-2222-2222-222222222222', 2, 'open', now() - interval '1 hour'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'maghrib', '18:50', '33333333-3333-3333-3333-333333333333', 1, 'open', now()),
+  -- (19:20-19:30 is inside Mumbai's maghrib window all year)
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'maghrib', '19:20', '11111111-1111-1111-1111-111111111111', 2, 'open', now() - interval '2 hours'),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'maghrib', '19:25', '22222222-2222-2222-2222-222222222222', 2, 'open', now() - interval '1 hour'),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'maghrib', '19:30', '33333333-3333-3333-3333-333333333333', 1, 'open', now()),
   -- fajr: below the 2-vote threshold
   ('aaaaaaaa-0000-0000-0000-000000000001', 'fajr', '05:30', '11111111-1111-1111-1111-111111111111', 1, 'open', now()),
   -- jummah: only archived / hidden rows
@@ -60,7 +61,7 @@ select results_eq(
   'stale row carries the community suggestion');
 select results_eq(
   $$select source, jamat_time, net_votes from t where prayer = 'maghrib'$$,
-  $$values ('community'::text, '18:45'::time, 2)$$,
+  $$values ('community'::text, '19:25'::time, 2)$$,
   'no verified: top suggestion with >= 2 votes, tie goes to newest');
 select is_empty($$select 1 from t where prayer = 'fajr'$$,
   'suggestion below 2 net votes is not shown');
@@ -82,7 +83,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 select results_eq(
   $$select prayer, jamat_time from public.masjid_suggestions('aaaaaaaa-0000-0000-0000-000000000001') where is_mine$$,
-  $$values ('zuhr'::public.prayer, '13:50'::time), ('maghrib'::public.prayer, '18:45'::time)$$,
+  $$values ('zuhr'::public.prayer, '13:50'::time), ('maghrib'::public.prayer, '19:25'::time)$$,
   'is_mine marks the caller''s own suggestions');
 reset role;
 

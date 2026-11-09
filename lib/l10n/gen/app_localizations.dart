@@ -885,6 +885,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out'**
   String get signOut;
+
+  /// No description provided for @errorOutsideWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'That time is outside this namaz\'s time at this masjid.'**
+  String get errorOutsideWindow;
+
+  /// No description provided for @outsideWindowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time inside the window above.'**
+  String get outsideWindowHint;
+
+  /// No description provided for @windowToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer} here today:'**
+  String windowToday(String prayer);
 }
 
 class _AppLocalizationsDelegate

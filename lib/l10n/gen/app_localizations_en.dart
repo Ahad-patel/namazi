@@ -489,4 +489,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signOut => 'Sign out';
+
+  @override
+  String get errorOutsideWindow =>
+      'That time is outside this namaz\'s time at this masjid.';
+
+  @override
+  String get outsideWindowHint => 'Pick a time inside the window above.';
+
+  @override
+  String windowToday(String prayer) {
+    return '$prayer here today:';
+  }
 }

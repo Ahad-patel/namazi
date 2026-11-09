@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
+import '../entities/prayer_window.dart';
 import '../entities/suggestion.dart';
 import '../repositories/suggestion_repository.dart';
 
@@ -35,4 +36,12 @@ class VoteOnSuggestion implements UseCase<Unit, VoteParams> {
   @override
   Future<Either<Failure, Unit>> call(VoteParams p) =>
       _repo.vote(p.suggestionId, p.value);
+}
+
+class GetPrayerWindows implements UseCase<List<PrayerWindow>, String> {
+  GetPrayerWindows(this._repo);
+  final SuggestionRepository _repo;
+  @override
+  Future<Either<Failure, List<PrayerWindow>>> call(String masjidId) =>
+      _repo.windows(masjidId);
 }

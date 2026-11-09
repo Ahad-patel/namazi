@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/repository_guard.dart';
+import '../../domain/entities/prayer_window.dart';
 import '../../domain/entities/suggestion.dart';
 import '../../domain/repositories/suggestion_repository.dart';
 import '../datasources/suggestion_remote_ds.dart';
@@ -16,6 +17,10 @@ class SuggestionRepositoryImpl
   @override
   Future<Either<Failure, List<Suggestion>>> list(String masjidId) =>
       guard(() => _remote.list(masjidId));
+
+  @override
+  Future<Either<Failure, List<PrayerWindow>>> windows(String masjidId) =>
+      guard(() => _remote.windows(masjidId));
 
   @override
   Future<Either<Failure, Unit>> submit(SuggestionDraft draft) =>

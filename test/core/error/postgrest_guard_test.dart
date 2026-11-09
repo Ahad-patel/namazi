@@ -20,6 +20,9 @@ void main() {
         code: 'MT429',
       ),
     );
+    await expectThrows<ValidationException>(
+      const PostgrestException(message: 'outside window', code: 'MT422'),
+    );
     await expectThrows<SessionExpiredException>(
       const PostgrestException(message: 'JWT expired', code: 'PGRST301'),
     );

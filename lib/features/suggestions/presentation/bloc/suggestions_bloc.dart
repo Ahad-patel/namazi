@@ -3,6 +3,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../masjids/domain/entities/prayer.dart';
+import '../../domain/entities/prayer_window.dart';
 import '../../domain/entities/suggestion.dart';
 import '../../domain/usecases/suggestion_usecases.dart';
 
@@ -16,18 +18,34 @@ class SuggestionsBloc extends Bloc<SuggestionsEvent, SuggestionsState> {
     required this._getSuggestions,
     required this._submit,
     required this._vote,
+    required this._getWindows,
   }) : super(const SuggestionsState()) {
     on<SuggestionsRequested>(_onRequested, transformer: restartable());
     on<SuggestionSubmitted>(_onSubmitted, transformer: droppable());
     on<SuggestionVoted>(_onVoted, transformer: sequential());
-    on<SuggestionFormOpened>(
-      (_, emit) => emit(state.copyWith(submitStatus: SubmitStatus.idle)),
-    );
+    on<SuggestionFormOpened>(_onFormOpened, transformer: droppable());
   }
 
   final GetSuggestions _getSuggestions;
   final SubmitSuggestion _submit;
   final VoteOnSuggestion _vote;
+  final GetPrayerWindows _getWindows;
+
+  /// Windows load once per masjid, when the sheet first opens. If they fail,
+  /// the sheet still submits and the server trigger decides.
+  Future<void> _onFormOpened(
+    SuggestionFormOpened event,
+    Emitter<SuggestionsState> emit,
+  ) async {
+    emit(state.copyWith(submitStatus: SubmitStatus.idle));
+    final id = state.masjidId;
+    if (id == null || state.windows.isNotEmpty) return;
+    final result = await _getWindows(id);
+    result.fold(
+      (_) {}, // no hints, server still validates
+      (w) => emit(state.copyWith(windows: w)),
+    );
+  }
 
   Future<void> _onRequested(
     SuggestionsRequested event,

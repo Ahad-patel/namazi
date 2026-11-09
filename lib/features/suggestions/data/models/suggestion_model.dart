@@ -1,4 +1,5 @@
 import '../../../masjids/domain/entities/prayer.dart';
+import '../../domain/entities/prayer_window.dart';
 import '../../domain/entities/suggestion.dart';
 
 class SuggestionModel extends Suggestion {
@@ -40,4 +41,21 @@ class SuggestionModel extends Suggestion {
     'azaan_time': d.azaan?.hhmm,
     'note': (d.note?.trim().isEmpty ?? true) ? null : d.note!.trim(),
   };
+}
+
+class PrayerWindowModel extends PrayerWindow {
+  const PrayerWindowModel({
+    required super.prayer,
+    required super.starts,
+    required super.ends,
+  });
+
+  static const columns = 'prayer,starts,ends';
+
+  factory PrayerWindowModel.fromJson(Map<String, dynamic> j) =>
+      PrayerWindowModel(
+        prayer: Prayer.values.byName(j['prayer'] as String),
+        starts: ClockTime.parse(j['starts'] as String),
+        ends: ClockTime.parse(j['ends'] as String),
+      );
 }

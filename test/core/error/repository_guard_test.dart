@@ -37,6 +37,10 @@ void main() {
       isA<RateLimitFailure>(),
     );
     expect(await failureOf(SignInException('otp')), isA<SignInFailure>());
+    expect(
+      await failureOf(ValidationException('MT422')),
+      isA<ValidationFailure>(),
+    );
     expect(await failureOf(TimeoutException('t')), isA<NetworkFailure>());
     expect(
       await failureOf(http.ClientException('offline')),

@@ -98,7 +98,13 @@ Future<void> configureDependencies() async {
   sl.registerFactory(() => GetSuggestions(sl()));
   sl.registerFactory(() => SubmitSuggestion(sl()));
   sl.registerFactory(() => VoteOnSuggestion(sl()));
+  sl.registerFactory(() => GetPrayerWindows(sl()));
   sl.registerFactory(
-    () => SuggestionsBloc(getSuggestions: sl(), submit: sl(), vote: sl()),
+    () => SuggestionsBloc(
+      getSuggestions: sl(),
+      submit: sl(),
+      vote: sl(),
+      getWindows: sl(),
+    ),
   );
 }

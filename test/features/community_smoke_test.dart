@@ -12,6 +12,7 @@ import 'package:namazi/features/masjids/domain/entities/prayer.dart';
 import 'package:namazi/features/masjids/presentation/bloc/add_masjid_bloc.dart';
 import 'package:namazi/features/masjids/presentation/pages/add_masjid_page.dart';
 import 'package:namazi/features/settings/presentation/pages/settings_page.dart';
+import 'package:namazi/features/suggestions/domain/entities/prayer_window.dart';
 import 'package:namazi/features/suggestions/presentation/bloc/suggestions_bloc.dart';
 import 'package:namazi/features/suggestions/presentation/widgets/suggest_time_sheet.dart';
 import 'package:namazi/features/suggestions/presentation/widgets/suggestion_tile.dart';
@@ -129,7 +130,14 @@ Map<String, Widget Function()> _screens() => {
       _Suggestions(),
       const SuggestionsState(
         submitStatus: SubmitStatus.failure,
-        submitFailure: RateLimitFailure('MT429'),
+        submitFailure: ValidationFailure('MT422'),
+        windows: [
+          PrayerWindow(
+            prayer: Prayer.jummah,
+            starts: ClockTime(12, 12),
+            ends: ClockTime(16, 37),
+          ),
+        ],
       ),
     ),
     child: const Scaffold(
@@ -193,5 +201,19 @@ void main() {
     await tester.pumpApp(_screens()['SuggestionTiles']!(), size: smokeSizes[1]);
     expect(find.byTooltip('Upvote'), findsOneWidget);
     expect(find.byTooltip('Downvote'), findsOneWidget);
+  });
+
+  testWidgets('suggest sheet shows today\'s window for the namaz', (
+    tester,
+  ) async {
+    await tester.pumpApp(
+      _screens()['SuggestTimeSheet']!(),
+      size: smokeSizes[1],
+    );
+    expect(find.text('Jummah here today: '), findsOneWidget);
+    expect(
+      find.text("That time is outside this namaz's time at this masjid."),
+      findsOneWidget,
+    );
   });
 }
