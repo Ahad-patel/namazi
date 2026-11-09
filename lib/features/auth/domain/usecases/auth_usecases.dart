@@ -58,3 +58,17 @@ class AcceptTerms implements UseCase<Unit, String> {
   Future<Either<Failure, Unit>> call(String version) =>
       _repo.acceptTerms(version);
 }
+
+class ExportMyData implements UseCase<String, NoParams> {
+  ExportMyData(this._repo);
+  final AuthRepository _repo;
+  @override
+  Future<Either<Failure, String>> call(NoParams _) => _repo.myData();
+}
+
+class DeleteAccount implements UseCase<Unit, NoParams> {
+  DeleteAccount(this._repo);
+  final AuthRepository _repo;
+  @override
+  Future<Either<Failure, Unit>> call(NoParams _) => _repo.deleteAccount();
+}

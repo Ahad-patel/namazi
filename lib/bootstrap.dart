@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
@@ -38,6 +39,8 @@ Future<void> bootstrap(Widget Function() builder) async {
       return;
     }
 
+    if (Env.sentryEnabled) await _initSentry();
+
     await Supabase.initialize(
       url: Env.supabaseUrl,
       publishableKey: Env.supabaseAnonKey,
@@ -48,11 +51,24 @@ Future<void> bootstrap(Widget Function() builder) async {
   }, _reportError);
 }
 
-// ponytail: console only; Sentry (prod, PII off) hooks in here in Phase 3.
 void _reportError(Object error, StackTrace? stack) {
   debugPrint('Uncaught error: $error');
   if (stack != null) debugPrintStack(stackTrace: stack);
+  if (Env.sentryEnabled) Sentry.captureException(error, stackTrace: stack);
 }
+
+/// PII off, and no HTTP breadcrumbs: request URLs can carry a searched area
+/// or map tile coordinates, and user location never leaves the device
+/// except as a query parameter (CLAUDE.md privacy rules).
+Future<void> _initSentry() => SentryFlutter.init((o) {
+  o
+    ..dsn = Env.sentryDsn
+    ..environment = Env.appEnv
+    ..sendDefaultPii = false
+    ..tracesSampleRate = 0.2
+    ..beforeBreadcrumb = (crumb, _) =>
+        crumb?.category == 'http' || crumb?.type == 'http' ? null : crumb;
+});
 
 void _registerFontLicences() {
   const fonts = {

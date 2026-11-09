@@ -4,12 +4,22 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/admin/data/datasources/admin_remote_ds.dart';
+import '../../features/admin/data/repositories/admin_repository_impl.dart';
+import '../../features/admin/domain/repositories/admin_repository.dart';
+import '../../features/admin/domain/usecases/admin_usecases.dart';
 import '../../features/auth/data/datasources/auth_remote_ds.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/auth_usecases.dart';
+import '../../features/auth/presentation/bloc/account_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/sign_in_bloc.dart';
+import '../../features/claims/data/datasources/claims_remote_ds.dart';
+import '../../features/claims/data/repositories/claims_repository_impl.dart';
+import '../../features/claims/domain/repositories/claims_repository.dart';
+import '../../features/claims/domain/usecases/claims_usecases.dart';
+import '../../features/claims/presentation/bloc/claims_bloc.dart';
 import '../../features/location/data/datasources/location_ds.dart';
 import '../../features/location/data/repositories/location_repository_impl.dart';
 import '../../features/location/domain/repositories/location_repository.dart';
@@ -89,6 +99,9 @@ Future<void> configureDependencies() async {
   sl.registerFactory(
     () => SignInBloc(google: sl(), sendCode: sl(), verifyCode: sl()),
   );
+  sl.registerFactory(() => ExportMyData(sl()));
+  sl.registerFactory(() => DeleteAccount(sl()));
+  sl.registerFactory(() => AccountBloc(export: sl(), delete: sl()));
 
   // ---- suggestions ----
   sl.registerLazySingleton(() => SuggestionRemoteDataSource(sl()));
@@ -107,4 +120,21 @@ Future<void> configureDependencies() async {
       getWindows: sl(),
     ),
   );
+
+  // ---- claims ----
+  sl.registerLazySingleton(() => ClaimsRemoteDataSource(sl()));
+  sl.registerLazySingleton<ClaimsRepository>(() => ClaimsRepositoryImpl(sl()));
+  sl.registerFactory(() => GetMasjidAccess(sl()));
+  sl.registerFactory(() => SubmitClaim(sl()));
+  sl.registerFactory(() => ClaimsBloc(getAccess: sl(), submit: sl()));
+
+  // ---- admin ----
+  // AdminQueueBloc<T> is built where it's used (generic); its use cases are
+  // here. Admin pages themselves are deferred imports on web.
+  sl.registerLazySingleton(() => AdminRemoteDataSource(sl()));
+  sl.registerLazySingleton<AdminRepository>(() => AdminRepositoryImpl(sl()));
+  sl.registerFactory(() => LoadAdminQueue(sl()));
+  sl.registerFactory(() => PerformAdminAction(sl()));
+  sl.registerFactory(() => GetSuggestionAuthor(sl()));
+  sl.registerFactory(() => GetProofUrl(sl()));
 }

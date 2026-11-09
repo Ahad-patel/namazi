@@ -37,6 +37,7 @@ void main() {
       isA<RateLimitFailure>(),
     );
     expect(await failureOf(SignInException('otp')), isA<SignInFailure>());
+    expect(await failureOf(ConflictException('MT409')), isA<ConflictFailure>());
     expect(
       await failureOf(ValidationException('MT422')),
       isA<ValidationFailure>(),

@@ -20,17 +20,29 @@ import '../widgets/nearby_map.dart';
 import '../widgets/next_jamat_banner.dart';
 
 class NearbyPage extends StatelessWidget {
-  const NearbyPage({super.key});
+  const NearbyPage({super.key, this.initialQuery});
+
+  /// `/nearby?q=…` from the web landing page: search that area instead of
+  /// asking for the location.
+  final String? initialQuery;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (_) => sl<NearbyBloc>()..add(const NearbyLocateRequested()),
-    child: const NearbyView(),
-  );
+  Widget build(BuildContext context) {
+    final q = initialQuery?.trim() ?? '';
+    return BlocProvider(
+      create: (_) => sl<NearbyBloc>()
+        ..add(
+          q.isEmpty ? const NearbyLocateRequested() : NearbyAreaQueryChanged(q),
+        ),
+      child: NearbyView(initialQuery: q.isEmpty ? null : q),
+    );
+  }
 }
 
 class NearbyView extends StatefulWidget {
-  const NearbyView({super.key, this.mapTilerKey});
+  const NearbyView({super.key, this.mapTilerKey, this.initialQuery});
+
+  final String? initialQuery;
 
   /// Overrides the build-time key (tests pass '' to skip tile requests).
   final String? mapTilerKey;
@@ -81,7 +93,7 @@ class _NearbyViewState extends State<NearbyView> {
         mapTilerKey: widget.mapTilerKey ?? Env.mapTilerKey,
       ),
     );
-    final list = _ListPane(onOpen: _open);
+    final list = _ListPane(onOpen: _open, initialQuery: widget.initialQuery);
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.appName),
@@ -131,7 +143,9 @@ class _NearbyViewState extends State<NearbyView> {
 }
 
 class _ListPane extends StatelessWidget {
-  const _ListPane({required this.onOpen});
+  const _ListPane({required this.onOpen, this.initialQuery});
+
+  final String? initialQuery;
 
   final ValueChanged<NearbyMasjid> onOpen;
 
@@ -155,6 +169,7 @@ class _ListPane extends StatelessWidget {
               ),
               sliver: SliverToBoxAdapter(
                 child: _SearchBar(
+                  initialQuery: initialQuery,
                   onChanged: (q) => bloc.add(NearbyAreaQueryChanged(q)),
                   onLocate: () => bloc.add(const NearbyLocateRequested()),
                 ),
@@ -264,15 +279,21 @@ class _StatusBody extends StatelessWidget {
 }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.onChanged, required this.onLocate});
+  const _SearchBar({
+    required this.onChanged,
+    required this.onLocate,
+    this.initialQuery,
+  });
 
+  final String? initialQuery;
   final ValueChanged<String> onChanged;
   final VoidCallback onLocate;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return TextField(
+    return TextFormField(
+      initialValue: initialQuery,
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(

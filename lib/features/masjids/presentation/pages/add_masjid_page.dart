@@ -86,7 +86,7 @@ class _AddMasjidViewState extends State<AddMasjidView> {
                   icon: Icons.check_circle_outline,
                   message: l10n.addMasjidThanks,
                   actionLabel: l10n.backToNearby,
-                  onAction: () => context.go('/'),
+                  onAction: () => context.go('/nearby'),
                 ),
               ),
               AddMasjidStatus.editing ||

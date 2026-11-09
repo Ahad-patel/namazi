@@ -501,4 +501,310 @@ class AppLocalizationsEn extends AppLocalizations {
   String windowToday(String prayer) {
     return '$prayer here today:';
   }
+
+  @override
+  String get errorConflict =>
+      'That can\'t be done: a limit was reached, such as 3 admins per masjid.';
+
+  @override
+  String get claimTitle => 'Claim this masjid';
+
+  @override
+  String get claimBody =>
+      'Tell us your role at this masjid. Every claim is reviewed by hand, usually with a phone call.';
+
+  @override
+  String get claimRoleLabel => 'Your role';
+
+  @override
+  String get roleImam => 'Imam';
+
+  @override
+  String get roleMutawalli => 'Mutawalli';
+
+  @override
+  String get roleCommittee => 'Committee member';
+
+  @override
+  String get phoneLabel => 'Phone number';
+
+  @override
+  String get phoneHelper => 'Used only to confirm your claim.';
+
+  @override
+  String get proofLabel => 'Proof photo (optional)';
+
+  @override
+  String get proofHelper =>
+      'A letter, notice board or card that links you to this masjid. Only the reviewer sees it.';
+
+  @override
+  String get addPhoto => 'Add photo';
+
+  @override
+  String get photoAdded => 'Photo added';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get claimPrivacy =>
+      'Your phone number and photo are seen only by the reviewer and are deleted 90 days after the decision.';
+
+  @override
+  String get sendClaim => 'Send claim';
+
+  @override
+  String get claimThanks =>
+      'Thanks. Your claim is waiting for review. We may call you to confirm.';
+
+  @override
+  String get claimPending => 'Your claim is waiting for review';
+
+  @override
+  String get manageTimes => 'Manage times';
+
+  @override
+  String get setTime => 'Set';
+
+  @override
+  String setTimeTitle(String prayer) {
+    return '$prayer time';
+  }
+
+  @override
+  String get startingToday => 'Starting today';
+
+  @override
+  String startingOn(String date) {
+    return 'Starting $date';
+  }
+
+  @override
+  String get changeDate => 'Change date';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get timeSaved => 'Saved. It shows as verified now.';
+
+  @override
+  String get inbox => 'Inbox';
+
+  @override
+  String get inboxEmpty => 'No community suggestions differ from your times.';
+
+  @override
+  String get yourTime => 'Your time';
+
+  @override
+  String netVotes(int votes) {
+    return '$votes net votes';
+  }
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get superAdmin => 'Super admin';
+
+  @override
+  String get tabClaims => 'Claims';
+
+  @override
+  String get tabMasjids => 'Masjids';
+
+  @override
+  String get tabSuggestions => 'Suggestions';
+
+  @override
+  String get tabAdmins => 'Admins';
+
+  @override
+  String get tabHidden => 'Hidden';
+
+  @override
+  String get tabLog => 'Log';
+
+  @override
+  String get segPending => 'Pending';
+
+  @override
+  String get segActive => 'Active';
+
+  @override
+  String get segMasjids => 'Masjids';
+
+  @override
+  String get segSuggestions => 'Suggestions';
+
+  @override
+  String get segBanned => 'Banned users';
+
+  @override
+  String get searchByName => 'Search by name';
+
+  @override
+  String get emptyQueue => 'Nothing here.';
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get hide => 'Hide';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get revoke => 'Revoke';
+
+  @override
+  String get banAuthor => 'Ban author';
+
+  @override
+  String get unban => 'Unban';
+
+  @override
+  String get viewProof => 'View proof photo';
+
+  @override
+  String get openInMaps => 'Open in maps';
+
+  @override
+  String get unknownUser => 'Unknown user';
+
+  @override
+  String byName(String name) {
+    return 'by $name';
+  }
+
+  @override
+  String get reasonOptional => 'Reason (optional)';
+
+  @override
+  String get rejectTitle => 'Reject?';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get actionDone => 'Done';
+
+  @override
+  String confirmHideMasjidTitle(String name) {
+    return 'Hide $name?';
+  }
+
+  @override
+  String get confirmHideMasjidBody =>
+      'It disappears for everyone. You can restore it from Hidden.';
+
+  @override
+  String confirmBanTitle(String name) {
+    return 'Ban $name?';
+  }
+
+  @override
+  String confirmBanBody(int count, String name) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open suggestions',
+      one: '1 open suggestion',
+      zero: 'no open suggestions',
+    );
+    return 'This hides $_temp0 by $name. They can still browse. You can unban them from Hidden.';
+  }
+
+  @override
+  String confirmRevokeTitle(String name) {
+    return 'Revoke admin rights of $name?';
+  }
+
+  @override
+  String confirmRevokeBody(String masjid) {
+    return 'They lose the admin section of $masjid. They can send a new claim later.';
+  }
+
+  @override
+  String typeToConfirm(String text) {
+    return 'Type $text to confirm';
+  }
+
+  @override
+  String get superAdminTools => 'Super admin tools';
+
+  @override
+  String logAction(String action) {
+    String _temp0 = intl.Intl.selectLogic(action, {
+      'approve_claim': 'Approved a claim',
+      'reject_claim': 'Rejected a claim',
+      'revoke_admin': 'Revoked an admin',
+      'approve_masjid': 'Approved a masjid',
+      'reject_masjid': 'Rejected a masjid',
+      'hide_masjid': 'Hid a masjid',
+      'restore_masjid': 'Restored a masjid',
+      'hide_suggestion': 'Hid a suggestion',
+      'restore_suggestion': 'Restored a suggestion',
+      'accept_suggestion': 'Accepted a suggestion',
+      'reject_suggestion': 'Rejected a suggestion',
+      'ban_user': 'Banned a user',
+      'unban_user': 'Unbanned a user',
+      'other': '$action',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get downloadMyData => 'Download my data';
+
+  @override
+  String get deleteMyAccount => 'Delete my account';
+
+  @override
+  String get deleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountBody =>
+      'Your profile, votes and claims are deleted. Times you suggested stay, without your name. This can\'t be undone.';
+
+  @override
+  String get deleteConfirmWord => 'DELETE';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get accountDeleted => 'Your account has been deleted.';
+
+  @override
+  String contactLine(String email) {
+    return 'Contact: $email';
+  }
+
+  @override
+  String versionWithPatch(String version, int patch) {
+    return '$version · patch $patch';
+  }
+
+  @override
+  String get deleteAccountPage => 'Account deletion';
+
+  @override
+  String get landingTitle => 'Jamat times at masjids near you';
+
+  @override
+  String get landingBody =>
+      'Times come from masjid admins and the community. They can change, so confirm with the masjid.';
+
+  @override
+  String get orSearchArea => 'or search an area';
 }

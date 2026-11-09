@@ -903,6 +903,504 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{prayer} here today:'**
   String windowToday(String prayer);
+
+  /// No description provided for @errorConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'That can\'t be done: a limit was reached, such as 3 admins per masjid.'**
+  String get errorConflict;
+
+  /// No description provided for @claimTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim this masjid'**
+  String get claimTitle;
+
+  /// No description provided for @claimBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us your role at this masjid. Every claim is reviewed by hand, usually with a phone call.'**
+  String get claimBody;
+
+  /// No description provided for @claimRoleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your role'**
+  String get claimRoleLabel;
+
+  /// No description provided for @roleImam.
+  ///
+  /// In en, this message translates to:
+  /// **'Imam'**
+  String get roleImam;
+
+  /// No description provided for @roleMutawalli.
+  ///
+  /// In en, this message translates to:
+  /// **'Mutawalli'**
+  String get roleMutawalli;
+
+  /// No description provided for @roleCommittee.
+  ///
+  /// In en, this message translates to:
+  /// **'Committee member'**
+  String get roleCommittee;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get phoneLabel;
+
+  /// No description provided for @phoneHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Used only to confirm your claim.'**
+  String get phoneHelper;
+
+  /// No description provided for @proofLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Proof photo (optional)'**
+  String get proofLabel;
+
+  /// No description provided for @proofHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'A letter, notice board or card that links you to this masjid. Only the reviewer sees it.'**
+  String get proofHelper;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get addPhoto;
+
+  /// No description provided for @photoAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo added'**
+  String get photoAdded;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @claimPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone number and photo are seen only by the reviewer and are deleted 90 days after the decision.'**
+  String get claimPrivacy;
+
+  /// No description provided for @sendClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Send claim'**
+  String get sendClaim;
+
+  /// No description provided for @claimThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. Your claim is waiting for review. We may call you to confirm.'**
+  String get claimThanks;
+
+  /// No description provided for @claimPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your claim is waiting for review'**
+  String get claimPending;
+
+  /// No description provided for @manageTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage times'**
+  String get manageTimes;
+
+  /// No description provided for @setTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get setTime;
+
+  /// No description provided for @setTimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer} time'**
+  String setTimeTitle(String prayer);
+
+  /// No description provided for @startingToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting today'**
+  String get startingToday;
+
+  /// No description provided for @startingOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting {date}'**
+  String startingOn(String date);
+
+  /// No description provided for @changeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Change date'**
+  String get changeDate;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @timeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. It shows as verified now.'**
+  String get timeSaved;
+
+  /// No description provided for @inbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get inbox;
+
+  /// No description provided for @inboxEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No community suggestions differ from your times.'**
+  String get inboxEmpty;
+
+  /// No description provided for @yourTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Your time'**
+  String get yourTime;
+
+  /// No description provided for @netVotes.
+  ///
+  /// In en, this message translates to:
+  /// **'{votes} net votes'**
+  String netVotes(int votes);
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @superAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Super admin'**
+  String get superAdmin;
+
+  /// No description provided for @tabClaims.
+  ///
+  /// In en, this message translates to:
+  /// **'Claims'**
+  String get tabClaims;
+
+  /// No description provided for @tabMasjids.
+  ///
+  /// In en, this message translates to:
+  /// **'Masjids'**
+  String get tabMasjids;
+
+  /// No description provided for @tabSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get tabSuggestions;
+
+  /// No description provided for @tabAdmins.
+  ///
+  /// In en, this message translates to:
+  /// **'Admins'**
+  String get tabAdmins;
+
+  /// No description provided for @tabHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get tabHidden;
+
+  /// No description provided for @tabLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Log'**
+  String get tabLog;
+
+  /// No description provided for @segPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get segPending;
+
+  /// No description provided for @segActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get segActive;
+
+  /// No description provided for @segMasjids.
+  ///
+  /// In en, this message translates to:
+  /// **'Masjids'**
+  String get segMasjids;
+
+  /// No description provided for @segSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get segSuggestions;
+
+  /// No description provided for @segBanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Banned users'**
+  String get segBanned;
+
+  /// No description provided for @searchByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name'**
+  String get searchByName;
+
+  /// No description provided for @emptyQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here.'**
+  String get emptyQueue;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get loadMore;
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
+
+  /// No description provided for @hide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hide;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @revoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get revoke;
+
+  /// No description provided for @banAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban author'**
+  String get banAuthor;
+
+  /// No description provided for @unban.
+  ///
+  /// In en, this message translates to:
+  /// **'Unban'**
+  String get unban;
+
+  /// No description provided for @viewProof.
+  ///
+  /// In en, this message translates to:
+  /// **'View proof photo'**
+  String get viewProof;
+
+  /// No description provided for @openInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in maps'**
+  String get openInMaps;
+
+  /// No description provided for @unknownUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown user'**
+  String get unknownUser;
+
+  /// No description provided for @byName.
+  ///
+  /// In en, this message translates to:
+  /// **'by {name}'**
+  String byName(String name);
+
+  /// No description provided for @reasonOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get reasonOptional;
+
+  /// No description provided for @rejectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject?'**
+  String get rejectTitle;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @actionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get actionDone;
+
+  /// No description provided for @confirmHideMasjidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide {name}?'**
+  String confirmHideMasjidTitle(String name);
+
+  /// No description provided for @confirmHideMasjidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It disappears for everyone. You can restore it from Hidden.'**
+  String get confirmHideMasjidBody;
+
+  /// No description provided for @confirmBanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban {name}?'**
+  String confirmBanTitle(String name);
+
+  /// No description provided for @confirmBanBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This hides {count, plural, =0{no open suggestions} =1{1 open suggestion} other{{count} open suggestions}} by {name}. They can still browse. You can unban them from Hidden.'**
+  String confirmBanBody(int count, String name);
+
+  /// No description provided for @confirmRevokeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke admin rights of {name}?'**
+  String confirmRevokeTitle(String name);
+
+  /// No description provided for @confirmRevokeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They lose the admin section of {masjid}. They can send a new claim later.'**
+  String confirmRevokeBody(String masjid);
+
+  /// No description provided for @typeToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {text} to confirm'**
+  String typeToConfirm(String text);
+
+  /// No description provided for @superAdminTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Super admin tools'**
+  String get superAdminTools;
+
+  /// No description provided for @logAction.
+  ///
+  /// In en, this message translates to:
+  /// **'{action, select, approve_claim{Approved a claim} reject_claim{Rejected a claim} revoke_admin{Revoked an admin} approve_masjid{Approved a masjid} reject_masjid{Rejected a masjid} hide_masjid{Hid a masjid} restore_masjid{Restored a masjid} hide_suggestion{Hid a suggestion} restore_suggestion{Restored a suggestion} accept_suggestion{Accepted a suggestion} reject_suggestion{Rejected a suggestion} ban_user{Banned a user} unban_user{Unbanned a user} other{{action}}}'**
+  String logAction(String action);
+
+  /// No description provided for @downloadMyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Download my data'**
+  String get downloadMyData;
+
+  /// No description provided for @deleteMyAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get deleteMyAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile, votes and claims are deleted. Times you suggested stay, without your name. This can\'t be undone.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteConfirmWord.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteConfirmWord;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted.'**
+  String get accountDeleted;
+
+  /// No description provided for @contactLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact: {email}'**
+  String contactLine(String email);
+
+  /// No description provided for @versionWithPatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} · patch {patch}'**
+  String versionWithPatch(String version, int patch);
+
+  /// No description provided for @deleteAccountPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion'**
+  String get deleteAccountPage;
+
+  /// No description provided for @landingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Jamat times at masjids near you'**
+  String get landingTitle;
+
+  /// No description provided for @landingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Times come from masjid admins and the community. They can change, so confirm with the masjid.'**
+  String get landingBody;
+
+  /// No description provided for @orSearchArea.
+  ///
+  /// In en, this message translates to:
+  /// **'or search an area'**
+  String get orSearchArea;
 }
 
 class _AppLocalizationsDelegate

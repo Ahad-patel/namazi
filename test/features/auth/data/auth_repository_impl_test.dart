@@ -63,4 +63,15 @@ void main() {
     final r = await repo.verifyEmailCode('a@b.co', '1');
     expect(r.fold((f) => f, (_) => null), isA<SignInFailure>());
   });
+
+  test('delete-account 401 surfaces as SessionExpiredFailure', () async {
+    when(ds.deleteAccount).thenThrow(SessionExpiredException('401'));
+    final r = await repo.deleteAccount();
+    expect(r.fold((f) => f, (_) => null), isA<SessionExpiredFailure>());
+  });
+
+  test('my data is passed through', () async {
+    when(ds.myData).thenAnswer((_) async => '{"votes": []}');
+    expect((await repo.myData()).getOrElse(() => ''), '{"votes": []}');
+  });
 }

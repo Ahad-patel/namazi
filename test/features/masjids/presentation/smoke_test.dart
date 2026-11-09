@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:namazi/core/error/failures.dart';
 import 'package:namazi/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:namazi/features/claims/domain/entities/claim.dart';
+import 'package:namazi/features/claims/presentation/bloc/claims_bloc.dart';
 import 'package:namazi/features/masjids/presentation/bloc/masjid_detail_bloc.dart';
 import 'package:namazi/features/masjids/presentation/bloc/nearby_bloc.dart';
 import 'package:namazi/features/masjids/presentation/pages/masjid_detail_page.dart';
@@ -24,8 +26,15 @@ class _MockSuggestions extends MockBloc<SuggestionsEvent, SuggestionsState>
 
 class _MockAuth extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
+class _MockClaims extends MockBloc<ClaimsEvent, ClaimsState>
+    implements ClaimsBloc {}
+
 /// Detail view with its suggestions + auth blocs mocked.
-Widget _detail(MasjidDetailState state, {SuggestionsState? suggestions}) {
+Widget _detail(
+  MasjidDetailState state, {
+  SuggestionsState? suggestions,
+  ClaimsState claims = const ClaimsState(status: AccessStatus.loaded),
+}) {
   final bloc = _MockDetail();
   whenListen(
     bloc,
@@ -50,9 +59,12 @@ Widget _detail(MasjidDetailState state, {SuggestionsState? suggestions}) {
     const Stream<AuthState>.empty(),
     initialState: const AuthState(status: AuthStatus.unauthenticated),
   );
+  final cBloc = _MockClaims();
+  whenListen(cBloc, const Stream<ClaimsState>.empty(), initialState: claims);
   return MultiBlocProvider(
     providers: [
       BlocProvider<AuthBloc>.value(value: auth),
+      BlocProvider<ClaimsBloc>.value(value: cBloc),
       BlocProvider<MasjidDetailBloc>.value(value: bloc),
       BlocProvider<SuggestionsBloc>.value(value: sBloc),
     ],
@@ -139,6 +151,30 @@ void main() {
           testWidgets('MasjidDetailView $name $tag', (tester) async {
             await tester.pumpApp(
               _detail(state),
+              size: size,
+              mode: mode,
+              textScale: scale,
+            );
+            expect(tester.takeException(), isNull);
+          });
+        }
+
+        for (final MapEntry(key: name, value: access) in {
+          'manage': const MasjidAccess(canManage: true),
+          'claim pending': const MasjidAccess(
+            canManage: false,
+            claimStatus: ClaimStatus.pending,
+          ),
+        }.entries) {
+          testWidgets('Detail access $name $tag', (tester) async {
+            await tester.pumpApp(
+              _detail(
+                _detailStates['loaded']!,
+                claims: ClaimsState(
+                  status: AccessStatus.loaded,
+                  access: access,
+                ),
+              ),
               size: size,
               mode: mode,
               textScale: scale,

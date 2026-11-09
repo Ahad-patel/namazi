@@ -21,6 +21,9 @@ class Env {
 
   static bool get isProd => appEnv == 'prod';
 
+  /// Crash + performance reporting: prod builds with a DSN only.
+  static bool get sentryEnabled => isProd && sentryDsn.isNotEmpty;
+
   /// Required keys that are empty in this build.
   static List<String> get missingKeys => [
     if (supabaseUrl.isEmpty) 'SUPABASE_URL',

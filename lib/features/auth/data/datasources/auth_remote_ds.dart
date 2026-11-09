@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -55,6 +57,19 @@ class AuthRemoteDataSource {
   );
 
   Future<void> signOut() => pg(() => _client.auth.signOut());
+
+  /// Everything we hold about the caller, as pretty-printed JSON.
+  Future<String> myData() => pg(() async {
+    final data = await _client.rpc<Object?>('my_data');
+    return const JsonEncoder.withIndent('  ').convert(data);
+  });
+
+  /// Server side (service role) in the delete-account Edge Function, then a
+  /// local sign-out: the server already ended the session.
+  Future<void> deleteAccount() => pg(() async {
+    await _client.functions.invoke('delete-account');
+    await _client.auth.signOut(scope: SignOutScope.local);
+  });
 
   Future<void> acceptTerms(String version) =>
       pg(() => _client.rpc<void>('accept_terms', params: {'version': version}));

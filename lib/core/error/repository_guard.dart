@@ -23,6 +23,8 @@ mixin RepositoryGuard {
       return Left(NetworkFailure(e.message));
     } on RateLimitException catch (e) {
       return Left(RateLimitFailure(e.message));
+    } on ConflictException catch (e) {
+      return Left(ConflictFailure(e.message));
     } on ValidationException catch (e) {
       return Left(ValidationFailure(e.message));
     } on SignInException catch (e) {

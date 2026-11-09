@@ -43,6 +43,13 @@ class AuthRepositoryImpl with RepositoryGuard implements AuthRepository {
       guard(() => _remote.signOut().then((_) => unit));
 
   @override
+  Future<Either<Failure, String>> myData() => guard(_remote.myData);
+
+  @override
+  Future<Either<Failure, Unit>> deleteAccount() =>
+      guard(() => _remote.deleteAccount().then((_) => unit));
+
+  @override
   Future<Either<Failure, Unit>> acceptTerms(String version) =>
       guard(() => _remote.acceptTerms(version).then((_) => unit));
 }

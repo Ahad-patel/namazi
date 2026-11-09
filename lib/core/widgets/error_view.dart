@@ -22,6 +22,7 @@ class ErrorView extends StatelessWidget {
     RateLimitFailure() => l10n.errorRateLimit,
     SignInFailure() => l10n.errorSignIn,
     ValidationFailure() => l10n.errorOutsideWindow,
+    ConflictFailure() => l10n.errorConflict,
   };
 
   @override

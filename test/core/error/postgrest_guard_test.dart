@@ -20,6 +20,12 @@ void main() {
         code: 'MT429',
       ),
     );
+    await expectThrows<NotFoundException>(
+      const PostgrestException(message: 'claim not pending', code: 'P0002'),
+    );
+    await expectThrows<ConflictException>(
+      const PostgrestException(message: '3 admins', code: 'MT409'),
+    );
     await expectThrows<ValidationException>(
       const PostgrestException(message: 'outside window', code: 'MT422'),
     );
@@ -40,6 +46,15 @@ void main() {
     );
     await expectThrows<NetworkException>(
       AuthRetryableFetchException(message: 'offline'),
+    );
+  });
+
+  test('maps Edge Function errors', () async {
+    await expectThrows<SessionExpiredException>(
+      const FunctionException(status: 401, details: 'unauthorized'),
+    );
+    await expectThrows<ServerException>(
+      const FunctionException(status: 500, details: 'boom'),
     );
   });
 }

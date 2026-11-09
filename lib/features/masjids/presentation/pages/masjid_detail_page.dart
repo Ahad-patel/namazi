@@ -14,7 +14,10 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/contributor_gate.dart';
+import '../../../claims/domain/entities/claim.dart';
+import '../../../claims/presentation/bloc/claims_bloc.dart';
 import '../../../suggestions/presentation/bloc/suggestions_bloc.dart';
 import '../../../suggestions/presentation/widgets/suggest_time_sheet.dart';
 import '../../../suggestions/presentation/widgets/suggestions_section.dart';
@@ -40,6 +43,7 @@ class MasjidDetailPage extends StatelessWidget {
               ..add(MasjidDetailRequested(slug, known: known)),
       ),
       BlocProvider(create: (_) => sl<SuggestionsBloc>()),
+      BlocProvider(create: (_) => sl<ClaimsBloc>()),
     ],
     child: const MasjidDetailView(),
   );
@@ -68,9 +72,17 @@ class MasjidDetailView extends StatelessWidget {
           BlocListener<MasjidDetailBloc, MasjidDetailState>(
             listenWhen: (a, b) =>
                 b.masjid != null && a.masjid?.id != b.masjid?.id,
-            listener: (context, s) => context.read<SuggestionsBloc>().add(
-              SuggestionsRequested(s.masjid!.id),
-            ),
+            listener: (context, s) {
+              context.read<SuggestionsBloc>().add(
+                SuggestionsRequested(s.masjid!.id),
+              );
+              _refreshAccess(context);
+            },
+          ),
+          // Claim / Manage depends on who is signed in.
+          BlocListener<AuthBloc, AuthState>(
+            listenWhen: (a, b) => a.user?.id != b.user?.id,
+            listener: (context, _) => _refreshAccess(context),
           ),
           // A submit or vote can change what masjid_times displays.
           BlocListener<SuggestionsBloc, SuggestionsState>(
@@ -131,6 +143,13 @@ class MasjidDetailView extends StatelessWidget {
     );
   }
 
+  static void _refreshAccess(BuildContext context) {
+    final id = context.read<MasjidDetailBloc>().state.masjid?.id;
+    if (id == null) return;
+    final signedIn = context.read<AuthBloc>().state.isSignedIn;
+    context.read<ClaimsBloc>().add(ClaimsAccessRequested(signedIn ? id : null));
+  }
+
   Future<void> _suggest(
     BuildContext context,
     Masjid masjid,
@@ -154,7 +173,7 @@ class MasjidDetailView extends StatelessWidget {
             icon: Icons.search_off,
             message: l10n.masjidNotFound,
             actionLabel: l10n.backToNearby,
-            onAction: () => context.go('/'),
+            onAction: () => context.go('/nearby'),
           )
         else
           ErrorView(
@@ -218,7 +237,67 @@ class _Header extends StatelessWidget {
           icon: const Icon(Icons.directions_outlined),
           label: Text(l10n.directions),
         ),
+        _AdminEntry(masjid: masjid),
       ],
+    );
+  }
+}
+
+/// Manage (approved admin / super admin), "claim pending", or Claim.
+class _AdminEntry extends StatelessWidget {
+  const _AdminEntry({required this.masjid});
+
+  final Masjid masjid;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tokens = context.tokens;
+    return BlocBuilder<ClaimsBloc, ClaimsState>(
+      builder: (context, s) {
+        final a = s.access;
+        final Widget? child = switch (s.status) {
+          // Secondary affordance: while loading or on error, show nothing
+          // rather than a claim button that may be wrong.
+          AccessStatus.initial ||
+          AccessStatus.loading ||
+          AccessStatus.error => null,
+          AccessStatus.loaded when a.canManage => OutlinedButton.icon(
+            onPressed: () =>
+                context.push('/m/${masjid.slug}/admin', extra: masjid),
+            icon: const Icon(Icons.edit_calendar_outlined),
+            label: Text(l10n.manageTimes),
+          ),
+          AccessStatus.loaded => switch (a.claimStatus) {
+            ClaimStatus.pending => Text(
+              l10n.claimPending,
+              style: tokens.caption.copyWith(
+                color: tokens.colors.onSurfaceVariant,
+              ),
+            ),
+            // Approved but can't manage = banned; nothing to offer.
+            ClaimStatus.approved => null,
+            ClaimStatus.rejected || ClaimStatus.revoked || null => TextButton(
+              onPressed: () async {
+                if (!await ensureContributor(context)) return;
+                if (!context.mounted) return;
+                await context.push('/m/${masjid.slug}/claim', extra: masjid);
+                if (context.mounted) MasjidDetailView._refreshAccess(context);
+              },
+              child: Text(l10n.claimTitle),
+            ),
+          },
+        };
+        return child == null
+            ? const SizedBox.shrink()
+            : Padding(
+                padding: const EdgeInsetsDirectional.only(top: AppSpacing.sm),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: child,
+                ),
+              );
+      },
     );
   }
 }

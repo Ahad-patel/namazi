@@ -17,14 +17,14 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 
 ### Stop bad deletes before they happen
 - [ ] **Restrict bulk deletes to authorized users.** No table has a client `delete` policy except `suggestion_votes` (a user removing their own vote). Everything else is removed by changing `status`, through RPCs gated on role. (Phase 1, enforced by pgTAP)
-- [ ] **Limit how many records one action can delete.** Moderation RPCs take exactly one id (`hide_suggestion(id)`, `ban_user(id)`, `hide_masjid(id)`). No "hide all from user" in v1. If one is added later, it caps at 50 rows and raises above that. (Phase 3)
+- [x] **Limit how many records one action can delete.** Moderation RPCs take exactly one id (`hide_suggestion(id)`, `ban_user(id)`, `hide_masjid(id)`). No "hide all from user" in v1. If one is added later, it caps at 50 rows and raises above that. (Phase 3)
 - [ ] **Require explicit authorization for destructive prod actions.** Jenkins `db` target runs on staging first; prod needs a separate run with `TARGET=db` and `ENV=prod`, plus an input step ("Type PROD to continue"). Migrations that `drop` or `truncate` anything need a `-- destructive: <reason>` header, and `tools/check.sh` fails on a drop without it. (Phase 3)
 - [ ] **Turn on deletion protection for the database resource.** Supabase has no per-project delete lock, so: org has only the owner as Owner, everyone else Developer or Read-only; MFA on every Supabase, Vercel, GitHub and Jenkins account; prod project in its own org if collaborators join. (Phase 1)
 - [ ] **Enforce delete permissions and limits on the server.** Covered by RLS + RPC checks above; the UI only hides buttons. pgTAP tests try a delete as every role and expect failure. (Phase 1–3)
-- [ ] **Preview the records a bulk action will affect.** Only bulk-ish action is banning a user: the confirm dialog shows "This hides N open suggestions by <name>" before the ban. (Phase 3)
-- [ ] **Typed confirmation for high-impact deletes.** Hide masjid, ban user, revoke admin, delete own account: the confirm button stays disabled until the masjid name / user name / "DELETE" is typed. Shared `ConfirmDestructiveDialog` in `lib/core/widgets/`. (Phase 3)
-- [ ] **Let users restore eligible items from Trash.** Soft delete everywhere: `masjids.status = hidden`, `time_suggestions.status = hidden`, `masjid_admins.status = revoked`. Super admin has a "Hidden" tab with Restore. Nothing is hard-deleted from the client. (Phase 3)
-- [ ] **Versioning for file storage.** Supabase Storage has no versioning, so proof photos are write-once: path `<user_id>/<claim_id>.jpg`, insert policy only, no `update` or `delete` policy for clients. A new claim gets a new path. (Phase 3)
+- [x] **Preview the records a bulk action will affect.** Only bulk-ish action is banning a user: the confirm dialog shows "This hides N open suggestions by <name>" before the ban. (Phase 3)
+- [x] **Typed confirmation for high-impact deletes.** Hide masjid, ban user, revoke admin, delete own account: the confirm button stays disabled until the masjid name / user name / "DELETE" is typed. Shared `ConfirmDestructiveDialog` in `lib/core/widgets/`. (Phase 3)
+- [x] **Let users restore eligible items from Trash.** Soft delete everywhere: `masjids.status = hidden`, `time_suggestions.status = hidden`, `masjid_admins.status = revoked`. Super admin has a "Hidden" tab with Restore. Nothing is hard-deleted from the client. (Phase 3)
+- [x] **Versioning for file storage.** Supabase Storage has no versioning, so proof photos are write-once: path `<user_id>/<claim_id>.jpg`, insert policy only, no `update` or `delete` policy for clients. A new claim gets a new path. (Phase 3)
 - [ ] **Test migrations on a staging copy first.** Every migration: `supabase db reset` locally + pgTAP green → `db push` to staging → `verify_remote.sh` on staging → app smoke on staging → then prod. Before a risky migration, restore last night's prod dump into staging and run it there. (Phase 2 on)
 
 ### Recover when they happen anyway
@@ -32,7 +32,7 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 - [ ] **Point-in-time recovery.** PITR add-on on prod once there's real community data worth more than a day's loss. Until then, the daily backup is the ceiling; noted in `NOTES.md`. (After launch, when traffic justifies it)
 - [ ] **A backup live credentials can't delete.** The nightly dump goes to an off-Supabase bucket (Backblaze B2 or Cloudflare R2) with object lock / retention 30 days. The upload key is write-only; the app and Supabase hold no credential for it. (Before launch)
 - [ ] **Alert on backup failures and unusual deletes.** Jenkins emails on `backup-prod` failure. A daily `moderation_report` query (part of the same job) emails if more than 20 hide/ban/revoke actions happened in 24h or the `masjids` active count dropped by more than 1%. (Before launch)
-- [ ] **Log who deleted what, and when.** `moderation_log` (trigger-written, super admin read-only) and `jamat_time_history`. Triggers branch on `tg_op` and log `before`/`after` jsonb. (Phase 3)
+- [x] **Log who deleted what, and when.** `moderation_log` (trigger-written, super admin read-only) and `jamat_time_history`. Triggers branch on `tg_op` and log `before`/`after` jsonb. (Phase 3)
 - [ ] **Test a restore in an isolated environment.** Monthly: restore the latest dump into a fresh local `supabase start`, run `supabase test db`, run row-count checks against the numbers in the backup log. Write the date and result in `NOTES.md`. (Before launch, then monthly)
 - [ ] **Verify the app works with restored data.** Point a local build at the restored stack (`env.local.json`), open nearby, a masjid detail, an admin inbox, a proof photo. Record in `NOTES.md`. (With each restore test)
 
@@ -45,12 +45,12 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 - [ ] **Optimistic UI.** Votes update the count and arrow immediately and roll back with a snackbar on error. Suggestion submit shows the row as "Sending…" in the list. (Phase 2)
 - [x] **Prevent unnecessary re-renders.** The next-jamat countdown ticks inside its own small widget (one `Timer.periodic` per minute, not per second, aligned to the minute), never by rebuilding the screen. `context.select` / `BlocSelector` / `buildWhen` for single fields; `const` constructors everywhere the linter allows. (Phase 1)
 - [x] **Virtualize long lists.** `ListView.builder` / `SliverList.builder` for nearby, search results, admin queues, moderation log. Never `Column` of a mapped list. (Phase 1)
-- [ ] **Lazy-load images below the screen.** Only images are map tiles (loaded per viewport by flutter_map) and proof photos (loaded only when the super admin opens a claim, via short-lived signed URL). (Phase 3)
+- [x] **Lazy-load images below the screen.** Only images are map tiles (loaded per viewport by flutter_map) and proof photos (loaded only when the super admin opens a claim, via short-lived signed URL). (Phase 3)
 - [x] **Debounce search inputs.** Area search waits 350ms after the last keystroke and cancels the previous request. (Phase 1)
 
 ### Network and API
 - [x] **Prevent duplicate API calls.** Blocs are the only fetch path (bloc → use case → repository), so a page and its child widgets share one request through the bloc above them. The masjid-times repository keeps an in-memory cache per `masjid_id` for 5 minutes. No fetch in `build()`; fetches are bloc events fired once (e.g. in `BlocProvider(create: ...)`). (Phase 1)
-- [ ] **Paginate API results.** `nearby_masjids` returns at most 50 rows ordered by distance. Admin queues, moderation log and suggestions use `.range()` pages of 25. (Phase 1/3)
+- [x] **Paginate API results.** `nearby_masjids` returns at most 50 rows ordered by distance. Admin queues, moderation log and suggestions use `.range()` pages of 25. (Phase 1/3)
 - [x] **Select only the columns you need.** Never `.select()` / `.select('*')`; always list the columns. RPCs return only what the screen shows. (Phase 1, reviewed in code review)
 - [x] **Fix N+1 queries.** The nearby list must not call `masjid_times` per card. `nearby_masjids` returns each masjid's next jamat (name, time, source) in the same query, and `next_jamat_nearby` gives the banner in one call. (Phase 1)
 - [x] **Run independent requests in parallel.** Detail page: masjid row and `masjid_times` together (`Future.wait` inside the bloc handler), not chained. Startup: location permission and the cached session in parallel. (Phase 1)
@@ -70,11 +70,11 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 - [ ] **Serve static files through a CDN.** Vercel edge serves the web build; MapTiler serves tiles from its CDN. (Phase 3)
 - [ ] **Brotli / Gzip compression.** Vercel compresses automatically. Verify `content-encoding: br` on `main.dart.js` after the first deploy. (Phase 3)
 - [ ] **Browser caching for static files.** `vercel.json` headers: hashed assets immutable, entry files must-revalidate. (Phase 3)
-- [ ] **Split JavaScript by page.** The admin and super-admin features are imported with `deferred as` so the web user never downloads them. (Phase 3)
-- [ ] **Render on the server or at build time.** N/A for the Flutter app (no SSR). The static legal pages (`privacy.html`, `terms.html`) are plain HTML in `web/`. `web/index.html` shows a lightweight HTML splash (logo + "Loading…" in token colors) until Flutter's first frame. (Phase 3)
+- [x] **Split JavaScript by page.** The admin and super-admin features are imported with `deferred as` so the web user never downloads them. (Phase 3)
+- [x] **Render on the server or at build time.** N/A for the Flutter app (no SSR). The static legal pages (`privacy.html`, `terms.html`) are plain HTML in `web/`. `web/index.html` shows a lightweight HTML splash (logo + "Loading…" in token colors) until Flutter's first frame. (Phase 3)
 - [ ] **Load third-party scripts after the page.** No third-party web scripts in v1. If one is ever added, it loads after first frame.
 - [x] **Self-host fonts, limit weights.** Fonts bundled (DESIGN.md). Manrope only at 500, 600, 700, 800. Noto Nastaliq Urdu is large: ship one weight (600) only. (Phase 1)
-- [ ] **WebP / AVIF images.** Proof photos are resized on device before upload: `image_picker` with `maxWidth: 1600, imageQuality: 80` (JPEG; no extra dependency). App icons and any illustration assets as WebP. (Phase 3)
+- [x] **WebP / AVIF images.** Proof photos are resized on device before upload: `image_picker` with `maxWidth: 1600, imageQuality: 80` (JPEG; no extra dependency). App icons and any illustration assets as WebP. (Phase 3)
 - [ ] **Remove unused dependencies.** Before each release: check `pubspec.yaml` of every package against its imports; remove anything unused. `flutter build web --analyze-size` and `flutter build apk --analyze-size` numbers go in `NOTES.md` so growth is visible. (Each release)
 
 ### Measure

@@ -64,6 +64,15 @@ class SignInException implements Exception {
   String toString() => 'SignInException: $message';
 }
 
+/// A server-side cap (`MT409`): 3 admins per masjid, or a ban that would
+/// hide more than 50 suggestions.
+class ConflictException implements Exception {
+  ConflictException(this.message);
+  final String message;
+  @override
+  String toString() => 'ConflictException: $message';
+}
+
 /// The server rejected the input (e.g. `MT422`: a time outside its namaz
 /// window).
 class ValidationException implements Exception {

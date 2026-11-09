@@ -2,8 +2,10 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:namazi/core/error/failures.dart';
 import 'package:namazi/core/theme/theme_cubit.dart';
+import 'package:namazi/features/auth/presentation/bloc/account_bloc.dart';
 import 'package:namazi/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:namazi/features/auth/presentation/bloc/sign_in_bloc.dart';
 import 'package:namazi/features/auth/presentation/pages/consent_page.dart';
@@ -11,6 +13,7 @@ import 'package:namazi/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:namazi/features/masjids/domain/entities/prayer.dart';
 import 'package:namazi/features/masjids/presentation/bloc/add_masjid_bloc.dart';
 import 'package:namazi/features/masjids/presentation/pages/add_masjid_page.dart';
+import 'package:namazi/features/masjids/presentation/pages/landing_page.dart';
 import 'package:namazi/features/settings/presentation/pages/settings_page.dart';
 import 'package:namazi/features/suggestions/domain/entities/prayer_window.dart';
 import 'package:namazi/features/suggestions/presentation/bloc/suggestions_bloc.dart';
@@ -22,6 +25,9 @@ import '../helpers/fixtures.dart';
 import '../helpers/pump_app.dart';
 
 class _Auth extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+
+class _Account extends MockBloc<AccountEvent, AccountState>
+    implements AccountBloc {}
 
 class _SignIn extends MockBloc<SignInEvent, SignInState>
     implements SignInBloc {}
@@ -45,9 +51,14 @@ const _signedIn = AuthState(
 
 late ThemeCubit _theme;
 
-Widget _withAuth(AuthState auth, Widget child) => MultiBlocProvider(
+Widget _withAuth(
+  AuthState auth,
+  Widget child, {
+  AccountState account = const AccountState(),
+}) => MultiBlocProvider(
   providers: [
     BlocProvider<AuthBloc>.value(value: _mock(_Auth(), auth)),
+    BlocProvider<AccountBloc>.value(value: _mock(_Account(), account)),
     BlocProvider<ThemeCubit>.value(value: _theme),
   ],
   child: child,
@@ -104,6 +115,12 @@ Map<String, Widget Function()> _screens() => {
       _withAuth(_signedOut, SettingsView(version: Future.value('1.0.0+1'))),
   'Settings signed in': () =>
       _withAuth(_signedIn, SettingsView(version: Future.value('1.0.0+1'))),
+  'Settings super admin, deleting': () => _withAuth(
+    const AuthState(status: AuthStatus.authenticated, user: superAdminUser),
+    SettingsView(version: Future.value('1.0.0+1 · patch 3')),
+    account: const AccountState(status: AccountStatus.deleting),
+  ),
+  'Landing': () => _withAuth(_signedOut, const LandingPage()),
   'Settings loading': () =>
       _withAuth(const AuthState(), SettingsView(version: Future.value('1'))),
   'AddMasjid editing': () => BlocProvider<AddMasjidBloc>.value(
@@ -215,5 +232,57 @@ void main() {
       find.text("That time is outside this namaz's time at this masjid."),
       findsOneWidget,
     );
+  });
+
+  testWidgets('delete account needs DELETE typed before it fires', (
+    tester,
+  ) async {
+    final account = _Account();
+    whenListen(
+      account,
+      const Stream<AccountState>.empty(),
+      initialState: const AccountState(),
+    );
+    await tester.pumpApp(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>.value(value: _mock(_Auth(), _signedIn)),
+          BlocProvider<AccountBloc>.value(value: account),
+          BlocProvider<ThemeCubit>.value(value: _theme),
+        ],
+        child: SettingsView(version: Future.value('1')),
+      ),
+      size: smokeSizes[3],
+    );
+    await tester.tap(find.text('Delete my account'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'delete');
+    await tester.pump();
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Delete'))
+          .onPressed,
+      isNull,
+    );
+    await tester.enterText(find.byType(TextField), 'DELETE');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    verify(() => account.add(const AccountDeleteRequested())).called(1);
+  });
+
+  testWidgets('super admin sees the tools entry, a user does not', (
+    tester,
+  ) async {
+    await tester.pumpApp(
+      _screens()['Settings signed in']!(),
+      size: smokeSizes[3],
+    );
+    expect(find.text('Super admin tools'), findsNothing);
+    await tester.pumpApp(
+      _screens()['Settings super admin, deleting']!(),
+      size: smokeSizes[3],
+    );
+    expect(find.text('Super admin tools'), findsOneWidget);
   });
 }

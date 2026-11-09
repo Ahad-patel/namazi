@@ -107,3 +107,12 @@ const signedInUser = AppUser(
   isAdult: true,
   termsVersion: 't1',
 );
+
+const superAdminUser = AppUser(
+  id: 'sa',
+  email: 'owner@test.local',
+  displayName: 'Owner',
+  role: UserRole.superAdmin,
+  isAdult: true,
+  termsVersion: 't1',
+);

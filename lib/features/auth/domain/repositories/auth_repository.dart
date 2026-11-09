@@ -22,6 +22,13 @@ abstract class AuthRepository {
 
   Future<Either<Failure, Unit>> signOut();
 
+  /// Profile, suggestions, votes, claims as a JSON document (my_data()).
+  Future<Either<Failure, String>> myData();
+
+  /// Deletes the account server side and signs out. Suggestions stay,
+  /// anonymised.
+  Future<Either<Failure, Unit>> deleteAccount();
+
   /// "I am 18 or older" + "I agree to the Terms and Privacy Policy".
   Future<Either<Failure, Unit>> acceptTerms(String version);
 }

@@ -17,7 +17,12 @@ Future<T> pg<T>(Future<T> Function() body) async {
     throw NetworkException('$e');
   } on PostgrestException catch (e) {
     if (e.code == '42501') throw PermissionException(e.message);
-    if (e.code == 'PGRST116') throw NotFoundException(e.message);
+    // PGRST116: 0 rows for .single(); P0002: our RPCs' "not found / not in
+    // that state any more".
+    if (e.code == 'PGRST116' || e.code == 'P0002') {
+      throw NotFoundException(e.message);
+    }
+    if (e.code == 'MT409') throw ConflictException(e.message);
     if (e.code == 'MT429') throw RateLimitException(e.message);
     if (e.code == 'MT422') throw ValidationException(e.message);
     if (_isJwtExpired(e.code, e.message)) {
@@ -30,6 +35,13 @@ Future<T> pg<T>(Future<T> Function() body) async {
       throw SessionExpiredException(e.message);
     }
     throw ServerException(e.message, code: e.statusCode);
+  } on FunctionException catch (e) {
+    // Edge Functions (delete-account): 401 = the session is gone.
+    if (e.status == 401) throw SessionExpiredException('${e.details}');
+    throw ServerException(
+      '${e.reasonPhrase}: ${e.details}',
+      code: '${e.status}',
+    );
   } on AuthException catch (e) {
     if (e.statusCode == '429' || e.code == 'over_email_send_rate_limit') {
       throw RateLimitException(e.message);
