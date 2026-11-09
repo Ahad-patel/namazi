@@ -32,6 +32,11 @@ void main() {
       isA<SessionExpiredFailure>(),
     );
     expect(await failureOf(NetworkException('t')), isA<NetworkFailure>());
+    expect(
+      await failureOf(RateLimitException('10/day')),
+      isA<RateLimitFailure>(),
+    );
+    expect(await failureOf(SignInException('otp')), isA<SignInFailure>());
     expect(await failureOf(TimeoutException('t')), isA<NetworkFailure>());
     expect(
       await failureOf(http.ClientException('offline')),

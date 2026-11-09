@@ -88,8 +88,8 @@ What the app holds, for reference: masjid data (partly derived from OpenStreetMa
 ### Policies and acceptance
 - [ ] **Privacy policy.** `web/privacy.html` (static, served by Vercel at `/privacy.html`, linked from the landing page, Settings, sign-in screen and both store listings). Covers: what's collected (email, display name, suggestions, votes, claim phone + photo), what isn't (location is used on device and sent only as a query, never stored or logged), processors, retention, rights, contact, children. Written for India's DPDP Act 2023 first, GDPR-compatible. (Phase 3, before store submission)
 - [ ] **Terms of service.** `web/terms.html`: community content rules, no guarantee times are correct ("confirm with the masjid"), we may hide content and ban, OSM attribution, governing law (India). (Phase 3)
-- [ ] **Checkbox to accept privacy policy and terms.** First sign-in shows "I agree to the Terms and Privacy Policy" (unticked, links open the pages) before the account can contribute. Browsing needs no account and no acceptance. (Phase 2)
-- [ ] **Terms acceptance records.** `profiles.terms_version text`, `profiles.terms_accepted_at timestamptz`, set through an RPC. When `TERMS_VERSION` changes, the app asks again on next contribution. (Phase 2)
+- [x] **Checkbox to accept privacy policy and terms.** First sign-in shows "I agree to the Terms and Privacy Policy" (unticked, links open the pages) before the account can contribute. Browsing needs no account and no acceptance. (Phase 2)
+- [x] **Terms acceptance records.** `profiles.terms_version text`, `profiles.terms_accepted_at timestamptz`, set through an RPC. When `TERMS_VERSION` changes, the app asks again on next contribution. (Phase 2)
 - [ ] **Refund policy.** N/A, free app, no purchases.
 - [ ] **Business contact details.** One contact email (also the data-protection / grievance contact DPDP requires) in the privacy policy, terms, Settings → About, and store listings. (Phase 3)
 

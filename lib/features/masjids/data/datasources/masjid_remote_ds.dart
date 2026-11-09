@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/postgrest_guard.dart';
+import '../../domain/entities/new_masjid.dart';
 import '../models/masjid_models.dart';
 
 /// Supabase RPC calls. Throws; the repository turns throws into Failures.
@@ -52,5 +53,23 @@ class MasjidRemoteDataSource {
         .rpc('masjid_times', params: {'masjid_id': masjidId})
         .select(PrayerTimeModel.columns);
     return [for (final r in rows) PrayerTimeModel.fromJson(r)];
+  });
+
+  /// `add_masjid` builds the slug and geography server side.
+  Future<String> add(NewMasjid m) => pg(() async {
+    final local = m.nameLocal?.trim();
+    final id = await _client.rpc<String>(
+      'add_masjid',
+      params: {
+        'name': m.name.trim(),
+        'lat': m.location.lat,
+        'lng': m.location.lng,
+        'name_local': (local == null || local.isEmpty) ? null : local,
+        'name_script': (local == null || local.isEmpty)
+            ? null
+            : m.nameScript?.name,
+      },
+    );
+    return id;
   });
 }

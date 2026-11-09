@@ -47,10 +47,18 @@ class PrayerTimeModel extends PrayerTime {
     required super.updatedAt,
     required super.nextAt,
     super.azaan,
+    super.netVotes,
+    super.differingReports,
+    super.stale,
+    super.communityAzaan,
+    super.communityJamat,
+    super.communityNetVotes,
   });
 
   static const columns =
-      'prayer,azaan_time,jamat_time,source,updated_at,next_at';
+      'prayer,azaan_time,jamat_time,source,updated_at,next_at,net_votes,'
+      'differing_reports,stale,community_azaan_time,community_jamat_time,'
+      'community_net_votes';
 
   factory PrayerTimeModel.fromJson(Map<String, dynamic> j) => PrayerTimeModel(
     prayer: Prayer.values.byName(j['prayer'] as String),
@@ -59,6 +67,12 @@ class PrayerTimeModel extends PrayerTime {
     source: TimeSource.values.byName(j['source'] as String),
     updatedAt: DateTime.parse(j['updated_at'] as String),
     nextAt: _instant(j['next_at']),
+    netVotes: (j['net_votes'] as num?)?.toInt(),
+    differingReports: (j['differing_reports'] as num?)?.toInt() ?? 0,
+    stale: j['stale'] as bool? ?? false,
+    communityAzaan: _clock(j['community_azaan_time']),
+    communityJamat: _clock(j['community_jamat_time']),
+    communityNetVotes: (j['community_net_votes'] as num?)?.toInt(),
   );
 }
 

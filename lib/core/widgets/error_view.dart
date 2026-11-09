@@ -19,6 +19,8 @@ class ErrorView extends StatelessWidget {
     SessionExpiredFailure() => l10n.errorSessionExpired,
     ServerFailure() => l10n.errorServer,
     LocationFailure() => l10n.errorLocation,
+    RateLimitFailure() => l10n.errorRateLimit,
+    SignInFailure() => l10n.errorSignIn,
   };
 
   @override

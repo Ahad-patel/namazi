@@ -12,7 +12,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../location/domain/entities/geo_point.dart';
+import '../../../auth/presentation/contributor_gate.dart';
 import '../../domain/entities/nearby_masjid.dart';
 import '../bloc/nearby_bloc.dart';
 import '../widgets/masjid_card.dart';
@@ -28,9 +28,6 @@ class NearbyPage extends StatelessWidget {
     child: const NearbyView(),
   );
 }
-
-/// Fallback map centre before any location is known (Mumbai, the v1 city).
-const _defaultCenter = GeoPoint(19.0760, 72.8777);
 
 class NearbyView extends StatefulWidget {
   const NearbyView({super.key, this.mapTilerKey});
@@ -48,6 +45,27 @@ class _NearbyViewState extends State<NearbyView> {
   void _open(NearbyMasjid m) =>
       context.push('/m/${m.masjid.slug}', extra: m.masjid);
 
+  Future<void> _addMasjid() async {
+    final origin = context.read<NearbyBloc>().state.origin;
+    if (!await ensureContributor(context)) return;
+    if (!mounted) return;
+    await context.push('/add-masjid', extra: origin);
+  }
+
+  /// Labelled buttons from the wide breakpoint, icon buttons below (DESIGN).
+  Widget _action({
+    required bool wide,
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) => wide
+      ? TextButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+        )
+      : IconButton(tooltip: label, onPressed: onPressed, icon: Icon(icon));
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -57,7 +75,7 @@ class _NearbyViewState extends State<NearbyView> {
       buildWhen: (a, b) => a.origin != b.origin || a.masjids != b.masjids,
       builder: (context, s) => NearbyMap(
         key: ValueKey(s.origin),
-        center: s.origin ?? _defaultCenter,
+        center: s.origin ?? defaultMapCenter,
         masjids: s.masjids,
         onOpen: _open,
         mapTilerKey: widget.mapTilerKey ?? Env.mapTilerKey,
@@ -74,6 +92,18 @@ class _NearbyViewState extends State<NearbyView> {
               onPressed: () => setState(() => _showMap = !_showMap),
               icon: Icon(_showMap ? Icons.list : Icons.map_outlined),
             ),
+          _action(
+            wide: wide,
+            label: l10n.addMasjid,
+            icon: Icons.add_location_alt_outlined,
+            onPressed: _addMasjid,
+          ),
+          _action(
+            wide: wide,
+            label: l10n.settings,
+            icon: Icons.settings_outlined,
+            onPressed: () => context.push('/settings'),
+          ),
         ],
       ),
       body: Center(

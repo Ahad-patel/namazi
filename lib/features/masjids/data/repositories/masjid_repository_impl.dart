@@ -5,6 +5,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/repository_guard.dart';
 import '../../../location/domain/entities/geo_point.dart';
 import '../../domain/entities/masjid.dart';
+import '../../domain/entities/new_masjid.dart';
 import '../../domain/entities/nearby_masjid.dart';
 import '../../domain/entities/prayer_time.dart';
 import '../../domain/repositories/masjid_repository.dart';
@@ -52,4 +53,8 @@ class MasjidRepositoryImpl with RepositoryGuard implements MasjidRepository {
     _timesCache[masjidId] = (_now(), fresh);
     return fresh;
   });
+
+  @override
+  Future<Either<Failure, String>> add(NewMasjid masjid) =>
+      guard(() => _remote.add(masjid));
 }

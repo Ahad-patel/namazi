@@ -10,7 +10,30 @@ import '../../../location/domain/entities/geo_point.dart';
 import '../../domain/entities/nearby_masjid.dart';
 import 'formatters.dart';
 
-/// Masjid pins on MapTiler tiles. Never tile.openstreetmap.org.
+/// Fallback map centre before any location is known (Mumbai, the v1 city).
+const defaultMapCenter = GeoPoint(19.0760, 72.8777);
+
+/// MapTiler tiles (never tile.openstreetmap.org) + the ODbL attribution.
+/// Empty [mapTilerKey] = no tiles (tests, misconfigured builds).
+List<Widget> baseMapLayers(String mapTilerKey) => [
+  if (mapTilerKey.isNotEmpty)
+    TileLayer(
+      urlTemplate:
+          'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={key}',
+      additionalOptions: {'key': mapTilerKey},
+      userAgentPackageName: 'com.ska.namazi',
+    ),
+];
+
+const mapAttribution = RichAttributionWidget(
+  alignment: AttributionAlignment.bottomRight,
+  attributions: [
+    TextSourceAttribution('OpenStreetMap contributors'),
+    TextSourceAttribution('MapTiler'),
+  ],
+);
+
+/// Masjid pins on MapTiler tiles.
 class NearbyMap extends StatefulWidget {
   const NearbyMap({
     super.key,
@@ -59,12 +82,7 @@ class _NearbyMapState extends State<NearbyMap> {
             backgroundColor: c.surfaceVariant,
           ),
           children: [
-            if (widget.mapTilerKey.isNotEmpty)
-              TileLayer(
-                urlTemplate: 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={key}',
-                additionalOptions: {'key': widget.mapTilerKey},
-                userAgentPackageName: 'com.ska.namazi',
-              ),
+            ...baseMapLayers(widget.mapTilerKey),
             MarkerLayer(
               markers: [
                 for (final m in widget.masjids)
@@ -94,13 +112,7 @@ class _NearbyMapState extends State<NearbyMap> {
                   ),
               ],
             ),
-            const RichAttributionWidget(
-              alignment: AttributionAlignment.bottomRight,
-              attributions: [
-                TextSourceAttribution('OpenStreetMap contributors'),
-                TextSourceAttribution('MapTiler'),
-              ],
-            ),
+            mapAttribution,
           ],
         ),
         PositionedDirectional(

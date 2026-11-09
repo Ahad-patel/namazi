@@ -24,6 +24,8 @@ class AppSpacing {
   static const double listPaneWidth = 440;
   static const double pin = 36;
   static const double skeletonLine = 14;
+  static const double formMaxWidth = 480;
+  static const double addMasjidMapHeight = 280;
 }
 
 class AppRadius {

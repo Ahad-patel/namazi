@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../../../location/domain/entities/geo_point.dart';
 import '../entities/masjid.dart';
+import '../entities/new_masjid.dart';
 import '../entities/nearby_masjid.dart';
 import '../entities/prayer_time.dart';
 
@@ -24,4 +25,7 @@ abstract class MasjidRepository {
     String masjidId, {
     bool refresh = false,
   });
+
+  /// Adds a pending masjid; returns its id.
+  Future<Either<Failure, String>> add(NewMasjid masjid);
 }

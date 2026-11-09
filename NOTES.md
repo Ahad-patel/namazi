@@ -7,7 +7,7 @@
 - **No freezed / json_serializable / build_runner.** Equatable entities, sealed bloc events/states, hand-written `fromJson`. Same as the reference repos; the only codegen is `flutter gen-l10n` (output in `lib/l10n/gen/`).
 - **Next-jamat instant is computed in SQL.** `masjid_times` returns `next_at timestamptz` per row (masjid's timezone, Jummah only on Fridays, Zuhr skips Fridays when the masjid has a Jummah time). The client never does timezone maths: countdown = `next_at - now`, highlight = smallest future `next_at`. When it passes, the bloc refetches.
 - **`masjids.osm_id` is `text` (`node/123`, `way/45`)**, not `bigint`: OSM ids are only unique per element type.
-- **Phase-1 `masjid_times` is verified-only.** Community fallback, conflicts and staleness come with `time_suggestions` in Phase 2 (`create or replace`).
+- **`masjid_times` carries all trust rules from Phase 2** (migration `…05_community.sql`): verified wins; else top open suggestion with net ≥ 2 (ties → newest); `differing_reports` (0 unless ≥ 2); staleness (120 days, with `community_*` columns) is in already, though the PRD lists it under Phase 3 — the return type had to change once, so it changed once. The function is dropped + recreated (return type changed), hence the `-- destructive:` header; no data is dropped.
 - **Helpers in schema `app`** (`app.next_occurrence`, `app.masjids_within`), not exposed through PostgREST. `nearby_masjids` and `next_jamat_nearby` both read `app.masjids_within`, so the banner sees every masjid in the radius, not just the 50 nearest.
 - **Detail page by slug: `masjid_by_slug(masjid_slug)` RPC** (PostgREST can't return lat/lng from a geography column). Opening from the list passes the `Masjid` via go_router `extra`, so only `masjid_times` is fetched; a shared link fetches masjid then times (chained — the times RPC needs the id).
 - **Area search = MapTiler Geocoding API** (same key as tiles, `country=in`, first result). No extra service or key.
@@ -17,10 +17,23 @@
 - **OSM import includes dargahs** (`amenity=place_of_worship` + `religion=muslim`). The super admin hides any that shouldn't be listed (Phase 3 tools).
 - **ODbL:** masjid locations come from OpenStreetMap; the map shows "© OpenStreetMap contributors · © MapTiler" (`RichAttributionWidget`) and the detail page footer repeats it. If the masjids table is ever offered publicly as data, it must be under ODbL.
 
+- **Google sign-in is browser OAuth on every platform** (`signInWithOAuth`, deep link `com.ska.namazi://login-callback` on Android/iOS, full-page redirect to `/` on web). No `google_sign_in` plugin and no per-platform client ids; only the web client id + secret in Supabase. Switch to native if the browser hop hurts.
+- **Email sign-in is a 6-digit OTP code**, not a magic link (`verifyOTP(type: email)`). The Supabase "Magic Link" email template must contain `{{ .Token }}` — the default template only sends a link.
+- **No router auth redirects.** Browsing never needs an account; `ensureContributor()` (`lib/features/auth/presentation/contributor_gate.dart`) pushes `/sign-in` then `/consent` when a user taps Suggest / Vote / Add masjid, and returns whether they may go ahead. RLS (`app.can_contribute()`: signed in, not banned, `is_adult`, terms accepted) is the real check.
+- **Consent is enforced server side as "accepted some version"**; the client re-asks when `TERMS_VERSION` differs from `profiles.terms_version`. `TERMS_VERSION` is now a required build key (misconfigured screen if empty).
+- **New build key `SITE_URL`** (public web origin, empty for now). Web uses its own origin for `/terms.html` and `/privacy.html`; mobile hides the links until it's set. Added (empty) to every `env.*.json`.
+- **`suggested_by` defaults to `auth.uid()`** and `masjid_suggestions(masjid_id)` returns `is_mine` / `my_vote`, so the client never sends or compares user ids. Votes: upsert on `(suggestion_id, user_id)`, delete to take a vote back; `net_votes` is recounted by a trigger.
+- **Add masjid goes through `add_masjid(...)` RPC** (security invoker): it builds the slug (`<latin-slug>-<6 hex>`, or `masjid-<hex>` for a name with no Latin letters) and the geography. Rows are `pending` and invisible to everyone (including the creator) until Phase 3 review. No per-user cap yet (`ponytail:` in the migration).
+- **Rate limits are their own Failure** (`RateLimitFailure`): our SQLSTATE `MT429` from the 10-a-day trigger, and auth HTTP 429. Auth errors are `SignInFailure`.
+- **Suggestions list capped at 50** per masjid (RPC `limit 50`, `ponytail:`), not paginated — at most one open row per user and namaz.
+- **Suggestion submit shows "Sending…" on the button**, not as a placeholder row in the list (CHECKLISTS §2 Optimistic UI asks for the row). Votes are fully optimistic with rollback + snackbar.
+- **`TimeText` / `formatters` are imported by `suggestions` from `masjids/presentation`.** Allowed (only `data/` is off-limits), but strictly they're now 2-feature widgets; moving them to `core/` would drag `ClockTime` into core. Left as is.
+
 ## Open questions
 
 - MapTiler key: needs creating and restricting to the app domains before the map shows tiles. Until then the map renders pins on a plain background.
 - DPDP: account creation asks "I am 18 or older" (Phase 2). Confirm the store target audience 13+.
+- Google provider + redirect URLs + SMTP must be configured per Supabase project (dashboard, by hand): Redirect URLs `http://localhost:*`, the Vercel domain, `com.ska.namazi://login-callback`; email template with `{{ .Token }}`; custom SMTP before launch.
 - Supabase CLI is not installed on the dev Mac; the owner applies migrations by hand for now. `tools/check.sh` prints a loud SKIPPED line for the SQL tests until it is.
 
 ## Verified
@@ -28,9 +41,13 @@
 - 2026-11-08: `./tools/check.sh` green — format, `flutter analyze` 0 issues, 209 Dart tests (theme contrast light+dark, repository guard mapping, repository + cache, nearby/detail bloc tests, widget smoke tests for both screens × 4 sizes × light/dark × 1.0/2.0 text scale × every state, with an Urdu name).
 - 2026-11-08: `flutter build web --release` compiles (no `dart:io` in the web build).
 - 2026-11-08: `tools/osm_import` ran against Overpass: 162 masjids for Greater Mumbai written to `supabase/osm_mumbai.sql`.
+- 2026-11-08 (Phase 2): `./tools/check.sh` green — format, analyze 0 issues, 515 Dart tests (AuthBloc, SignInBloc, SuggestionsBloc incl. optimistic vote + rollback, AddMasjidBloc, auth/suggestion repositories, `pg()` mapping incl. `MT429` and auth 429, smoke tests for sign-in, consent, settings, add masjid, suggest sheet, suggestion tiles, and detail with suggestions + trust-rule rows at 4 sizes × light/dark × 1.0/2.0). `flutter build web --release` compiles.
+- 2026-11-09: `…05_community.sql` applied to the dev project (`env.local.json`). Probed with the anon key: `time_suggestions`, `suggestion_votes`, `masjid_suggestions`, new `masjid_times` columns and `nearby_masjids` all return 200; anon `accept_terms`, `add_masjid` and suggestion insert are refused with `42501`. Two real suggestions exist (sign-in → consent → insert worked end to end); with 0 votes they correctly stay out of `masjid_times`. Owner confirmed the OTP email (custom SMTP + `{{ .Token }}` template) arrives.
+- **Not verified:** Phase 2 SQL (`…05_community.sql`, `supabase/tests/05–07`) has not been run either — same reason. Google OAuth and email OTP not tried against a real project.
 - **Not verified:** migrations and pgTAP tests (`supabase/tests/01–04`) have not been run — no Supabase CLI and Docker was not running. Run `supabase start && supabase db reset && supabase test db` before trusting them.
 
 ## Still to do
 
 - Phase 1 leftovers: run the SQL tests; `explain analyze` of `nearby_masjids` on the Mumbai import; staging project + `env.staging.json`; Jenkins job pointing at `Jenkinsfile` (test-only); app name/icon suffix for non-prod builds; `meetsGuideline` accessibility widget test.
-- Phase 2 per PRD: auth (Google + email OTP), consent screen, `time_suggestions` + `suggestion_votes`, full trust rules in `masjid_times`, abuse trigger, suggest/vote/add masjid, Settings (theme, sign out, version, licences).
+- Phase 2 leftovers: two-account vote test (2 upvotes → row shows "Community"); 11th suggestion in a day refused; run pgTAP 01–07 once the CLI exists; staging project + same dashboard auth setup there.
+- Phase 3 (PRD): claims + proof upload, admin times + inbox, super admin queues (incl. pending masjids from `add_masjid`), history trigger, moderation log, landing page, Vercel/Shorebird/Jenkins deploy, download my data / delete account, legal pages (consent links point at `/terms.html` and `/privacy.html`, which don't exist yet), Shorebird patch number in the Settings version line.

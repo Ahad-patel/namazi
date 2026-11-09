@@ -46,3 +46,20 @@ class LocationException implements Exception {
   @override
   String toString() => 'LocationException: ${problem.name}';
 }
+
+/// A server-side limit: the 10-a-day suggestion trigger (`MT429`) or auth
+/// rate limiting (HTTP 429).
+class RateLimitException implements Exception {
+  RateLimitException(this.message);
+  final String message;
+  @override
+  String toString() => 'RateLimitException: $message';
+}
+
+/// Supabase Auth said no: wrong or expired code, provider error.
+class SignInException implements Exception {
+  SignInException(this.message);
+  final String message;
+  @override
+  String toString() => 'SignInException: $message';
+}

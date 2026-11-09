@@ -15,6 +15,10 @@ class Env {
   static const sentryDsn = String.fromEnvironment('SENTRY_DSN');
   static const termsVersion = String.fromEnvironment('TERMS_VERSION');
 
+  /// Public web origin (the Vercel domain) for legal links on mobile. Empty =
+  /// the web build uses its own origin and mobile hides the links.
+  static const siteUrl = String.fromEnvironment('SITE_URL');
+
   static bool get isProd => appEnv == 'prod';
 
   /// Required keys that are empty in this build.
@@ -22,6 +26,7 @@ class Env {
     if (supabaseUrl.isEmpty) 'SUPABASE_URL',
     if (supabaseAnonKey.isEmpty) 'SUPABASE_ANON_KEY',
     if (mapTilerKey.isEmpty) 'MAPTILER_KEY',
+    if (termsVersion.isEmpty) 'TERMS_VERSION',
   ];
 
   static bool get isConfigured => missingKeys.isEmpty;
