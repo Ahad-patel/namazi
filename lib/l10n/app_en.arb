@@ -1,0 +1,338 @@
+{
+  "@@locale": "en",
+  "appName": "Masjid Timer",
+  "offline": "You're offline. Showing what was loaded last.",
+  "prayerFajr": "Fajr",
+  "prayerZuhr": "Zuhr",
+  "prayerAsr": "Asr",
+  "prayerMaghrib": "Maghrib",
+  "prayerIsha": "Isha",
+  "prayerJummah": "Jummah",
+  "searchAreaHint": "Search an area, e.g. Bandra West",
+  "searchAreaLabel": "Search area",
+  "useMyLocation": "Use my location",
+  "showMap": "Show map",
+  "showList": "Show list",
+  "nearYou": "Near you",
+  "nearArea": "Near {area}",
+  "@nearArea": {
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
+  },
+  "locationDeniedTitle": "Search for an area to see masjids near it.",
+  "locationDeniedBody": "Location is off for this app. You can turn it on in settings, or search by area.",
+  "locationServiceOff": "Location services are off. Turn them on, or search by area.",
+  "areaNotFound": "We couldn't find \"{query}\". Try a nearby landmark or area name.",
+  "@areaNotFound": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyNearby": "No masjids within {km} km.",
+  "@emptyNearby": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "searchWider": "Search a wider area",
+  "distanceWalk": "{distance} · {minutes} min walk",
+  "@distanceWalk": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceKm": "{km} km",
+  "@distanceKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "distanceM": "{m} m",
+  "@distanceM": {
+    "placeholders": {
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "noTimeYet": "No time yet",
+  "nextJamat": "Next jamat",
+  "countdownMinutes": "{minutes, plural, =0{now} =1{1 min} other{{minutes} min}}",
+  "@countdownMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "countdownHours": "{hours} h {minutes} min",
+  "@countdownHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "countdownDays": "{days} d {hours} h",
+  "@countdownDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "nextIn": "Next · in {duration}",
+  "@nextIn": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "nextJamatSemantics": "Next jamat {prayer} at {masjid} in {duration}",
+  "@nextJamatSemantics": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      },
+      "masjid": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "mapPinSemantics": "{name}, {distance}",
+  "@mapPinSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out",
+  "azaan": "Azaan",
+  "jamat": "Jamat",
+  "namaz": "Namaz",
+  "notAvailable": "Not available",
+  "directions": "Directions",
+  "detailFooter": "Times can change. Confirm with the masjid.",
+  "mapAttribution": "© OpenStreetMap contributors · © MapTiler",
+  "emptyTimes": "No times yet for this masjid.",
+  "masjidNotFound": "We couldn't find this masjid. It may have moved or been removed.",
+  "backToNearby": "Back to nearby masjids",
+  "pageNotFound": "This page doesn't exist.",
+  "back": "Back",
+  "badgeVerified": "Verified · {date}",
+  "@badgeVerified": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeCommunity": "Community · {date}",
+  "@badgeCommunity": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeVerifiedSemantics": "Verified time, updated {date}",
+  "@badgeVerifiedSemantics": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "badgeCommunitySemantics": "Community time, updated {date}",
+  "@badgeCommunitySemantics": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "sourceVerifiedTitle": "Verified",
+  "sourceVerifiedBody": "Set by an approved admin of this masjid.",
+  "sourceCommunityTitle": "Community",
+  "sourceCommunityBody": "Suggested by the community.",
+  "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
+  "errorPermission": "You don't have permission to do that.",
+  "errorNotFound": "We couldn't find that.",
+  "errorSessionExpired": "Please sign in again.",
+  "errorServer": "Something went wrong on our side. Please try again.",
+  "errorLocation": "We couldn't get your location. Search by area instead.",
+  "retry": "Retry",
+  "signIn": "Sign in",
+  "technicalDetails": "Technical details",
+  "loading": "Loading",
+  "errorRateLimit": "You've reached the limit for now. Please try again later.",
+  "errorSignIn": "That didn't work. Check the code, or ask for a new one.",
+  "bannedNotice": "Your account can't add or vote on times. You can still browse.",
+  "signInTitle": "Sign in to contribute",
+  "signInBody": "Browsing never needs an account. Sign in to suggest times, vote, or add a missing masjid.",
+  "continueWithGoogle": "Continue with Google",
+  "or": "or",
+  "emailLabel": "Email",
+  "emailMeCode": "Email me a code",
+  "codeSentTo": "We sent a code to {email}. It expires in a few minutes.",
+  "@codeSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "codeLabel": "Code from the email",
+  "verifyCode": "Sign in",
+  "useDifferentEmail": "Use a different email",
+  "resendCode": "Send a new code",
+  "consentTitle": "Before you contribute",
+  "consentBody": "Your suggestions and votes help others find the right jamat time. Please confirm both to continue.",
+  "consentAdult": "I am 18 or older",
+  "consentTerms": "I agree to the Terms and Privacy Policy",
+  "continueLabel": "Continue",
+  "terms": "Terms",
+  "privacyPolicy": "Privacy Policy",
+  "sourceCommunityBodyVotes": "{votes, plural, =1{Suggested by the community, 1 net vote.} other{Suggested by the community, {votes} net votes.}}",
+  "@sourceCommunityBodyVotes": {
+    "placeholders": {
+      "votes": {
+        "type": "int"
+      }
+    }
+  },
+  "mayBeOutdated": "May be outdated",
+  "differingReports": "{count} people report a different time",
+  "@differingReports": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityPrefix": "Community:",
+  "suggest": "Suggest",
+  "voteFailed": "Your vote wasn't saved. {reason}",
+  "@voteFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "communitySuggestions": "Community suggestions",
+  "suggestTime": "Suggest a time",
+  "noSuggestions": "No suggestions yet.",
+  "suggestedOn": "Suggested {date}",
+  "@suggestedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "suggestedOnYours": "Your suggestion · {date}",
+  "@suggestedOnYours": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "upvote": "Upvote",
+  "downvote": "Downvote",
+  "netVotesSemantics": "{votes, plural, =1{1 net vote} other{{votes} net votes}}",
+  "@netVotesSemantics": {
+    "placeholders": {
+      "votes": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestionThanks": "Thanks. Your suggestion is listed under Community suggestions.",
+  "suggestTimeBody": "It shows under Community suggestions straight away. A new suggestion for the same namaz replaces your old one.",
+  "jamatTime": "Jamat time",
+  "azaanTimeOptional": "Azaan time (optional)",
+  "azaanAfterJamat": "Azaan must be at or before the jamat time.",
+  "noteOptional": "Note (optional), e.g. \"From the notice board\"",
+  "sending": "Sending…",
+  "submit": "Submit",
+  "clear": "Clear",
+  "addMasjid": "Add a masjid",
+  "addMasjidBody": "Tap the map where the masjid is, then enter its name. It appears once it has been reviewed.",
+  "addMasjidThanks": "Thanks. The masjid will appear once it's been reviewed.",
+  "pinDroppedSemantics": "Masjid location pin",
+  "tapMapForPin": "Tap the map to place the pin.",
+  "pinDropped": "Pin placed. Tap again to move it.",
+  "useMapCentre": "Use map centre",
+  "masjidNameLabel": "Masjid name",
+  "masjidLocalNameLabel": "Name in Arabic or Urdu (optional)",
+  "scriptArabic": "Arabic script",
+  "scriptUrdu": "Urdu script",
+  "submitForReview": "Send for review",
+  "settings": "Settings",
+  "theme": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "account": "Account",
+  "about": "About",
+  "licences": "Open-source licences",
+  "versionLine": "Version {version}",
+  "@versionLine": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "signedOutBody": "You're browsing without an account.",
+  "signedInAs": "Signed in as {who}",
+  "@signedInAs": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "signOut": "Sign out",
+  "errorOutsideWindow": "That time is outside this namaz's time at this masjid.",
+  "outsideWindowHint": "Pick a time inside the window above.",
+  "windowToday": "{prayer} here today:",
+  "@windowToday": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  }
+}

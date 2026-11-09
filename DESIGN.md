@@ -166,7 +166,7 @@ components:
 - Gold `accent` is used as a fill with navy text. Never put gold text on a light surface (it fails contrast).
 - `verified` green is only for the verified badge. Community items use neutral outlines, not a color.
 - Text contrast is ≥ 4.5:1 in both themes, including captions.
-- Contrast is enforced, not eyeballed: `packages/ui/test/theme_contrast_test.dart` checks every text-on-background pair (on-surface/surface, on-surface/background, on-surface-variant/surface, on-primary/primary, on-accent/accent, on-accent-container/accent-container, verified/verified-container, error/surface) in light and dark. Change a token, the test tells you if it broke.
+- Contrast is enforced, not eyeballed: `test/core/theme_contrast_test.dart` checks every text-on-background pair (on-surface/surface, on-surface/background, on-surface-variant/surface, on-primary/primary, on-accent/accent, on-accent-container/accent-container, verified/verified-container, error/surface) in light and dark. Change a token, the test tells you if it broke.
 - The misconfigured screen (no Supabase keys in the build) is the only place colors may be literal, because it renders before the theme exists.
 
 ## Typography
@@ -174,7 +174,7 @@ components:
 - Arabic names use Noto Naskh Arabic. Urdu names use Noto Nastaliq Urdu, which needs its taller line height.
 - Pick the name font from `masjids.name_script`. If it's null, detect from the Unicode range (U+0600–U+06FF).
 - Times show as `h:mm` plus a smaller AM/PM, following the device's 12/24-hour setting.
-- Fonts are bundled in `apps/masjid_timer/assets/fonts/` (Manrope, Noto Naskh Arabic, Noto Nastaliq Urdu, with their OFL licence files). No `google_fonts`: a first launch offline must still render in the right font, and widget tests must not hit the network.
+- Fonts are bundled in `assets/fonts/` (Manrope, Noto Naskh Arabic, Noto Nastaliq Urdu, with their OFL licence files). No `google_fonts`: a first launch offline must still render in the right font, and widget tests must not hit the network.
 
 ## Layout
 - 4px base grid. Page padding is `spacing.page`. Gap between list cards is `spacing.sm`.
@@ -212,7 +212,7 @@ components:
   - If the masjid has both, show the Latin name as the title and the local-script name as a second line.
   - Distance and times keep their LTR layout.
 
-- **Loading, empty and error states** (shared `StateView` in `packages/ui`, used by every `AsyncValue.when`)
+- **Loading, empty and error states** (shared `LoadingView` / `EmptyState` / `ErrorView` in `lib/core/widgets/`, used by every page's switch on its bloc state)
   - Loading: skeleton rows the shape of the real content (masjid cards, prayer rows). A spinner only for under-a-second actions inside a button.
   - Empty: one outlined icon, one sentence that says what's missing, one action. "No masjids within 3 km" + "Search a wider area". "No time yet" + "Suggest a time".
   - Error: a plain-language message for a non-technical reader ("Couldn't reach the server. Check your connection and try again.") + Retry. The raw error sits behind a collapsed "Technical details" line, so a screenshot of a bug report still carries it.
@@ -220,7 +220,7 @@ components:
   - Session expired: "Please sign in again" with a Sign in button.
 - **Environment strip**
   - Non-prod builds only: a 24px strip above the app bar, `error` fill, "STAGING" / "LOCAL" in `label`. Never in prod.
-- **Destructive confirm** (`ConfirmDestructiveDialog` in `packages/ui`)
+- **Destructive confirm** (`ConfirmDestructiveDialog` in `lib/core/widgets/`)
   - Title says what happens ("Hide Masjid-e-Noor?"), body says the effect and whether it can be undone ("It disappears for everyone. You can restore it from Hidden.").
   - A text field asks for the exact name (or "DELETE" for account deletion). The `error`-colored button stays disabled until it matches. Cancel is the default focus.
 - **Consent at first sign-in**

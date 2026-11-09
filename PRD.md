@@ -111,8 +111,8 @@ RLS enforces every row of this. The UI only hides buttons.
 
 ## Build order
 - **Phase 1 — Browse (read-only)**
-  - Monorepo, theme tokens (with contrast test), bundled fonts, router, l10n setup
-  - `Env` + `env.<env>.json` files (local, staging, prod), `bootstrap.dart` with the misconfigured screen, shared error/empty/loading views, `guardPg` error mapping
+  - Clean-architecture skeleton (`lib/core/` + `lib/features/`, get_it injector, BLoC), theme tokens (with contrast test), bundled fonts, router, l10n setup
+  - `Env` + `env.<env>.json` files (local, staging, prod), `bootstrap.dart` with the misconfigured screen, shared error/empty/loading views, `pg()` + `RepositoryGuard` error mapping to `Failure`
   - `tools/check.sh` and a Jenkins job that runs it on any branch (test-only, no deploy yet)
   - Migrations: profiles (+ `handle_new_user` trigger), masjids, jamat_times, RLS, PostGIS, the nearby RPC, with pgTAP tests
   - OSM import for Mumbai, plus seed jamat times for 5 test masjids
